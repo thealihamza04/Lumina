@@ -3,6 +3,7 @@
 import { ColorStop, Layer, GradientType } from '@/lib/gradient-utils';
 import { Button } from '@/components/ui/button';
 import { ColorStopEditor } from './color-stop-editor';
+import { Slider } from '@/components/ui/slider';
 import { Plus, Palette, Grid } from 'lucide-react';
 
 interface ControlPanelProps {
@@ -105,14 +106,13 @@ export function ControlPanel({
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-medium text-slate-500 mb-1 block">Opacity: {Math.round(layer.opacity * 100)}%</label>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={layer.opacity}
-              onChange={(e) => onUpdateLayer({ ...layer, opacity: Number(e.target.value) })}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            <Slider
+              min={0}
+              max={1}
+              step={0.01}
+              value={[layer.opacity]}
+              onValueChange={([value]) => onUpdateLayer({ ...layer, opacity: value })}
+              className="mt-2"
             />
           </div>
           <div>
@@ -157,13 +157,13 @@ export function ControlPanel({
             </button>
           </div>
           {layer.blurEnabled && (
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={layer.blurAmount}
-              onChange={(e) => onUpdateLayer({ ...layer, blurAmount: Number(e.target.value) })}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            <Slider
+              min={0}
+              max={100}
+              step={1}
+              value={[layer.blurAmount]}
+              onValueChange={([value]) => onUpdateLayer({ ...layer, blurAmount: value })}
+              className="mt-2"
             />
           )}
 
@@ -182,13 +182,13 @@ export function ControlPanel({
             </button>
           </div>
           {layer.noiseEnabled && (
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={layer.noiseAmount}
-              onChange={(e) => onUpdateLayer({ ...layer, noiseAmount: Number(e.target.value) })}
-              className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+            <Slider
+              min={0}
+              max={100}
+              step={1}
+              value={[layer.noiseAmount]}
+              onValueChange={([value]) => onUpdateLayer({ ...layer, noiseAmount: value })}
+              className="mt-2"
             />
           )}
         </div>
@@ -256,13 +256,13 @@ export function ControlPanel({
           {(gradient.type === 'linear' || gradient.type === 'linear-repeating') && (
             <div>
               <label className="text-xs font-medium text-slate-500 mb-1.5 block">Angle: {gradient.angle}°</label>
-              <input
-                type="range"
-                min="0"
-                max="360"
-                value={gradient.angle}
-                onChange={(e) => updateGradient({ angle: Number(e.target.value) })}
-                className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              <Slider
+                min={0}
+                max={360}
+                step={1}
+                value={[gradient.angle]}
+                onValueChange={([value]) => updateGradient({ angle: value })}
+                className="mt-2"
               />
             </div>
           )}
@@ -304,22 +304,24 @@ export function ControlPanel({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase block">Pos X: {gradient.radialX}%</label>
-                  <input
-                    type="range"
-                    min="0" max="100"
-                    value={gradient.radialX}
-                    onChange={(e) => updateGradient({ radialX: Number(e.target.value) })}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[gradient.radialX]}
+                    onValueChange={([value]) => updateGradient({ radialX: value })}
+                    className="mt-2"
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase block">Pos Y: {gradient.radialY}%</label>
-                  <input
-                    type="range"
-                    min="0" max="100"
-                    value={gradient.radialY}
-                    onChange={(e) => updateGradient({ radialY: Number(e.target.value) })}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[gradient.radialY]}
+                    onValueChange={([value]) => updateGradient({ radialY: value })}
+                    className="mt-2"
                   />
                 </div>
               </div>
@@ -330,33 +332,36 @@ export function ControlPanel({
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase block">Start Angle: {gradient.conicAngle}°</label>
-                <input
-                  type="range"
-                  min="0" max="360"
-                  value={gradient.conicAngle}
-                  onChange={(e) => updateGradient({ conicAngle: Number(e.target.value) })}
-                  className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                <Slider
+                  min={0}
+                  max={360}
+                  step={1}
+                  value={[gradient.conicAngle]}
+                  onValueChange={([value]) => updateGradient({ conicAngle: value })}
+                  className="mt-2"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase block">Center X: {gradient.conicX}%</label>
-                  <input
-                    type="range"
-                    min="0" max="100"
-                    value={gradient.conicX}
-                    onChange={(e) => updateGradient({ conicX: Number(e.target.value) })}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[gradient.conicX]}
+                    onValueChange={([value]) => updateGradient({ conicX: value })}
+                    className="mt-2"
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase block">Center Y: {gradient.conicY}%</label>
-                  <input
-                    type="range"
-                    min="0" max="100"
-                    value={gradient.conicY}
-                    onChange={(e) => updateGradient({ conicY: Number(e.target.value) })}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  <Slider
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[gradient.conicY]}
+                    onValueChange={([value]) => updateGradient({ conicY: value })}
+                    className="mt-2"
                   />
                 </div>
               </div>

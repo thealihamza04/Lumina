@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { ColorStop } from '@/lib/gradient-utils';
 import { HexColorPicker } from 'react-colorful';
+import { Slider } from '@/components/ui/slider';
 import { Trash2, GripVertical } from 'lucide-react';
 
 // Inline styles for react-colorful
@@ -107,26 +108,25 @@ export function ColorStopEditor({
 
       <div className="flex-1 min-w-0">
         <div className="text-xs font-medium text-slate-600 mb-1">Position: {stop.position}%</div>
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={stop.position}
-          onChange={(e) => onUpdate({ ...stop, position: Number(e.target.value) })}
-          className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+        <Slider
+          value={[stop.position]}
+          min={0}
+          max={100}
+          step={1}
+          onValueChange={([value]) => onUpdate({ ...stop, position: value })}
+          className="my-2"
         />
       </div>
 
       <div className="flex flex-col items-end gap-1">
         <div className="text-xs font-medium text-slate-600">Opacity: {Math.round(stop.opacity * 100)}%</div>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
-          value={stop.opacity}
-          onChange={(e) => onUpdate({ ...stop, opacity: Number(e.target.value) })}
-          className="w-20 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+        <Slider
+          value={[stop.opacity]}
+          min={0}
+          max={1}
+          step={0.01}
+          onValueChange={([value]) => onUpdate({ ...stop, opacity: value })}
+          className="w-20 my-2"
         />
       </div>
 

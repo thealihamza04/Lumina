@@ -208,22 +208,25 @@ export function GradientEditor() {
         <GradientPreview layers={layers} />
       </div>
 
-      {/* Layer Settings Sheet */}
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <SheetContent className="sm:max-w-lg overflow-y-auto border-l border-slate-200 shadow-2xl">
-          <SheetHeader className="mb-8 space-y-2">
-            <SheetTitle className="text-2xl font-black text-slate-900 tracking-tight">Layer Settings</SheetTitle>
-            <SheetDescription className="text-slate-500 font-medium">
-              Fine-tune the appearance, gradient, and effects for this specific layer.
-            </SheetDescription>
-          </SheetHeader>
+        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-2xl p-0 flex flex-col">
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-6 pb-10 space-y-6">
+              <SheetHeader className="mb-2 p-0 space-y-1">
+                <SheetTitle className="text-2xl font-black text-slate-900 tracking-tight">Layer Settings</SheetTitle>
+                <SheetDescription className="text-slate-500 font-medium">
+                  Fine-tune the appearance, gradient, and effects for this specific layer.
+                </SheetDescription>
+              </SheetHeader>
 
-          {activeLayer && (
-            <ControlPanel
-              layer={activeLayer}
-              onUpdateLayer={updateLayer}
-            />
-          )}
+              {activeLayer && (
+                <ControlPanel
+                  layer={activeLayer}
+                  onUpdateLayer={updateLayer}
+                />
+              )}
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
     </div>
