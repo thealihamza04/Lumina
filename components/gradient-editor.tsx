@@ -122,7 +122,7 @@ export function GradientEditor() {
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-blue-50 border border-blue-200 ring-2 ring-blue-500/10'
-                    : 'bg-white border border-slate-100 hover:border-slate-300 hover:shadow-md'
+                    : 'bg-white border border-slate-100 hover:border-slate-300 hover:shadow-sm'
                     }`}
                 >
                   {/* Layer Preview Mini */}
@@ -209,7 +209,7 @@ export function GradientEditor() {
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-2xl p-0 flex flex-col">
+        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-sm p-0 flex flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 pb-10 space-y-6">
               <SheetHeader className="mb-2 p-0 space-y-1">

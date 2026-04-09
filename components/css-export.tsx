@@ -19,10 +19,10 @@ interface CSSExportProps {
 
 export function CSSExport({ layers }: CSSExportProps) {
   const [copied, setCopied] = useState(false);
-  
+
   const generateFullCSS = () => {
     let css = '/* --- Container Styles --- */\n.gradient-container {\n  position: relative;\n  width: 100%;\n  height: 100vh;\n  overflow: hidden;\n  background: #fff;\n}\n\n';
-    
+
     layers.filter(l => l.visible).forEach((layer, index) => {
       css += `/* Layer: ${layer.name} */\n`;
       css += `.layer-${index} {\n`;
@@ -35,19 +35,19 @@ export function CSSExport({ layers }: CSSExportProps) {
       }
       if (layer.opacity < 1) css += `  opacity: ${layer.opacity};\n`;
       if (layer.blendMode !== 'normal') css += `  mix-blend-mode: ${layer.blendMode};\n`;
-      
+
       const filters = [];
       if (layer.blurEnabled) filters.push(`blur(${layer.blurAmount}px)`);
       if (layer.noiseEnabled) filters.push(`url(#noise-${layer.id})`);
-      
+
       if (filters.length > 0) {
         css += `  filter: ${filters.join(' ')};\n`;
       }
-      
+
       css += `  z-index: ${layers.indexOf(layer)};\n`;
       css += '}\n\n';
     });
-    
+
     return css;
   };
 
@@ -75,7 +75,7 @@ export function CSSExport({ layers }: CSSExportProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-6 rounded-xl shadow-lg transition-all active:scale-[0.98]">
+        <Button className="w-full gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-6 rounded-xl shadow-sm transition-all active:scale-[0.98]">
           <Code2 className="w-5 h-5 text-blue-400" />
           Export Composition
           <ExternalLink className="w-4 h-4 opacity-30" />
