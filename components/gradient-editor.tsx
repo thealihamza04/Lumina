@@ -121,12 +121,12 @@ export function GradientEditor() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-6 h-screen bg-[#12101a] p-6 overflow-hidden text-[#ddd8f9]">
       {/* Left Panel - Layers & Export */}
       <div className="w-full lg:w-96 flex flex-col gap-4 overflow-hidden">
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex flex-col overflow-hidden">
+        <div className="rounded-3xl border border-[#3f3a4f] bg-[#211d2b] shadow-[0_18px_36px_rgba(7,6,10,0.45)] p-4 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-slate-900">Gradient Gen</h1>
+            <h1 className="text-2xl font-bold text-[#d6cffd]">Gradient Gen</h1>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -147,22 +147,22 @@ export function GradientEditor() {
               <DialogTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="w-full justify-between gap-2 border-slate-200 hover:border-blue-200 hover:bg-blue-50/50 group h-11 px-4 text-sm font-semibold"
+                  className="w-full justify-between gap-2 border-[#4b4560] bg-[#2a2538] hover:border-[#9a87ff] hover:bg-[#332c47] group h-11 px-4 text-sm font-semibold rounded-2xl text-[#d6cffd]"
                 >
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
-                    <span className="text-slate-700">Explore Templates</span>
+                    <Sparkles className="w-4 h-4 text-[#b09dff] group-hover:scale-110 transition-transform" />
+                    <span className="text-[#d6cffd]">Explore Templates</span>
                   </div>
-                  <LayoutGrid className="w-4 h-4 text-slate-400" />
+                  <LayoutGrid className="w-4 h-4 text-[#958bb7]" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl">
+              <DialogContent className="sm:max-w-2xl border-[#4b4560] bg-[#201b2b] text-[#ddd8f9]">
                 <DialogHeader className="mb-4">
                   <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-500" />
+                    <Sparkles className="w-5 h-5 text-[#b09dff]" />
                     Gradient Presets
                   </DialogTitle>
-                  <DialogDescription>
+                  <DialogDescription className="text-[#aca3cf]">
                     Choose a professionally crafted gradient to start your composition. 
                     You can customize all layers after applying.
                   </DialogDescription>
@@ -172,7 +172,7 @@ export function GradientEditor() {
                     <div key={template.id} className="group relative">
                       <button
                         onClick={() => applyTemplate(template)}
-                        className="w-full aspect-square rounded-xl border-2 border-slate-100 overflow-hidden hover:border-blue-500 transition-all hover:shadow-xl relative bg-slate-50"
+                        className="w-full aspect-square rounded-2xl border-2 border-[#3f3a4f] overflow-hidden hover:border-[#8b7dff] transition-all hover:shadow-xl relative bg-[#2a2538]"
                       >
                         <div className="absolute inset-0 pointer-events-none">
                           {template.layers.slice().reverse().map((layer, idx) => (
@@ -190,9 +190,9 @@ export function GradientEditor() {
                             />
                           ))}
                         </div>
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-[#8b7dff]/10 transition-colors" />
                       </button>
-                      <p className="mt-2 text-[11px] font-bold text-slate-600 uppercase tracking-tighter text-center">
+                      <p className="mt-2 text-[11px] font-bold text-[#aba1d1] uppercase tracking-tighter text-center">
                         {template.name}
                       </p>
                     </div>
@@ -205,7 +205,7 @@ export function GradientEditor() {
           {/* Layer List */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-3 px-1">
-              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+              <h2 className="text-xs font-bold text-[#9c92c4] uppercase tracking-wider flex items-center gap-2">
                 <Layers className="w-3.5 h-3.5" /> Layers ({layers.length})
               </h2>
               <Button
@@ -223,13 +223,13 @@ export function GradientEditor() {
                   key={layer.id}
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
-                    ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-500/10'
-                    : 'bg-white border border-slate-100 hover:border-slate-300 hover:shadow-sm'
+                    ? 'bg-[#2e2840] border border-[#8b7dff] ring-1 ring-[#8b7dff]/40'
+                    : 'bg-[#262132] border border-[#3f3a4f] hover:border-[#6f6590] hover:shadow-sm'
                     }`}
                 >
                   {/* Layer Preview Mini */}
                   <div
-                    className="w-8 h-8 rounded-md shadow-inner border border-slate-200 flex-shrink-0 relative overflow-hidden bg-white"
+                    className="w-8 h-8 rounded-xl shadow-inner border border-[#4b4560] flex-shrink-0 relative overflow-hidden bg-[#221e2f]"
                   >
                     <div
                       className="absolute inset-0 opacity-10"
@@ -248,10 +248,10 @@ export function GradientEditor() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <span className={`block text-xs font-bold truncate ${layer.visible ? 'text-slate-900' : 'text-slate-400'}`}>
+                    <span className={`block text-xs font-bold truncate ${layer.visible ? 'text-[#e5e0ff]' : 'text-[#7f769f]'}`}>
                       {layer.name}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
+                    <span className="text-[9px] font-bold text-[#8e84b4] uppercase tracking-tight leading-none">
                       {layer.type} • {layer.blendMode}
                     </span>
                   </div>
@@ -260,7 +260,7 @@ export function GradientEditor() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 w-7 p-0 hover:bg-white hover:text-blue-600"
+                      className="h-7 w-7 p-0 hover:bg-[#3a3150] hover:text-[#b09dff]"
                       onClick={(e) => {
                         e.stopPropagation();
                         openSettings(layer.id);
@@ -268,7 +268,7 @@ export function GradientEditor() {
                     >
                       <Settings2 className="w-3.5 h-3.5" />
                     </Button>
-                    <div className="w-px h-3 bg-slate-200 mx-0.5" />
+                    <div className="w-px h-3 bg-[#4b4560] mx-0.5" />
                     <Button
                       size="sm"
                       variant="ghost"
@@ -283,7 +283,7 @@ export function GradientEditor() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 w-7 p-0 hover:text-red-500 hover:bg-red-50"
+                      className="h-7 w-7 p-0 hover:text-red-300 hover:bg-red-900/30"
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteLayer(layer.id);
@@ -298,25 +298,25 @@ export function GradientEditor() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 mt-auto">
-          <h2 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest">Export Options</h2>
+        <div className="rounded-3xl border border-[#3f3a4f] bg-[#211d2b] shadow-[0_18px_36px_rgba(7,6,10,0.45)] p-4 mt-auto">
+          <h2 className="text-xs font-bold text-[#9c92c4] uppercase mb-3 tracking-widest">Export Options</h2>
           <CSSExport layers={layers} />
         </div>
       </div>
 
       {/* Right Panel - Preview */}
-      <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 overflow-hidden flex flex-col">
-        <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
+      <div className="flex-1 rounded-3xl border border-[#3f3a4f] bg-[#211d2b] shadow-[0_18px_36px_rgba(7,6,10,0.45)] p-6 overflow-hidden flex flex-col">
+        <h2 className="text-xs font-bold text-[#9c92c4] uppercase mb-4 tracking-widest">Global Composition Preview</h2>
         <GradientPreview layers={layers} />
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-sm p-0 flex flex-col">
+        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-[#4b4560] bg-[#1e1a28] text-[#ddd8f9] shadow-sm p-0 flex flex-col">
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 pb-10 space-y-6">
               <SheetHeader className="mb-2 p-0 space-y-1">
-                <SheetTitle className="text-2xl font-black text-slate-900 tracking-tight">Layer Settings</SheetTitle>
-                <SheetDescription className="text-slate-500 font-medium">
+                <SheetTitle className="text-2xl font-black text-[#ddd8f9] tracking-tight">Layer Settings</SheetTitle>
+                <SheetDescription className="text-[#a69dca] font-medium">
                   Fine-tune the appearance, gradient, and effects for this specific layer.
                 </SheetDescription>
               </SheetHeader>
