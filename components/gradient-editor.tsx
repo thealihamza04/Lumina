@@ -112,7 +112,12 @@ export function GradientEditor() {
             ...s,
             id: `stop-${layerId}-${si}`
           }))
-        } : undefined
+        } : undefined,
+        x: l.x ?? 0,
+        y: l.y ?? 0,
+        width: l.width ?? 100,
+        height: l.height ?? 100,
+        rotation: l.rotation ?? 0,
       } as Layer;
     });
     setLayers(newLayers);
@@ -307,7 +312,12 @@ export function GradientEditor() {
       {/* Right Panel - Preview */}
       <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 overflow-hidden flex flex-col">
         <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
-        <GradientPreview layers={layers} />
+        <GradientPreview
+          layers={layers}
+          activeLayerId={activeLayerId}
+          onSelectLayer={setActiveLayerId}
+          onUpdateLayer={updateLayer}
+        />
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
