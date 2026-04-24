@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import {
   RotateCcw,
   Plus,
+  ChevronDown,
   Layers,
   Trash2,
   Eye,
@@ -39,6 +40,12 @@ import {
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { generateGradientCSSString } from '@/lib/gradient-utils';
 
 export function GradientEditor() {
@@ -57,8 +64,21 @@ export function GradientEditor() {
     setActiveLayerId('1');
   };
 
-  const addLayer = () => {
+  const addLayer = (preset: 'default' | 'blur' | 'noise' = 'default') => {
     const newLayer = getDefaultLayer();
+    if (preset === 'blur') {
+      newLayer.name = `Blur ${newLayer.name}`;
+      newLayer.blurEnabled = true;
+      newLayer.blurAmount = 36;
+      newLayer.opacity = 0.85;
+    }
+    if (preset === 'noise') {
+      newLayer.name = `Noise ${newLayer.name}`;
+      newLayer.noiseEnabled = true;
+      newLayer.noiseAmount = 55;
+      newLayer.opacity = 0.5;
+      newLayer.blendMode = 'overlay';
+    }
     setLayers([newLayer, ...layers]);
     setActiveLayerId(newLayer.id);
     setIsSettingsOpen(true);
@@ -112,7 +132,12 @@ export function GradientEditor() {
             ...s,
             id: `stop-${layerId}-${si}`
           }))
-        } : undefined
+        } : undefined,
+        x: l.x ?? 0,
+        y: l.y ?? 0,
+        width: l.width ?? 100,
+        height: l.height ?? 100,
+        rotation: l.rotation ?? 0,
       } as Layer;
     });
     setLayers(newLayers);
@@ -208,14 +233,39 @@ export function GradientEditor() {
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <Layers className="w-3.5 h-3.5" /> Layers ({layers.length})
               </h2>
-              <Button
-                size="sm"
-                variant="default"
-                className="h-7 px-3 text-[10px] font-bold uppercase tracking-tight gap-1.5"
-                onClick={addLayer}
-              >
-                <Plus className="w-3 h-3" /> New Layer
-              </Button>
+              <div className="flex items-center">
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-7 px-3 text-[10px] font-bold uppercase tracking-tight gap-1.5 rounded-r-none"
+                  onClick={() => addLayer('default')}
+                >
+                  <Plus className="w-3 h-3" /> New Layer
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-7 px-2 rounded-l-none border-l border-white/20"
+                      aria-label="Choose layer preset"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => addLayer('default')}>
+                      Standard Layer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('blur')}>
+                      Blur Layer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('noise')}>
+                      Noise Layer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             <div className="space-y-2 overflow-y-auto pr-2 pb-4 h-full">
               {layers.map((layer, index) => (
@@ -307,7 +357,12 @@ export function GradientEditor() {
       {/* Right Panel - Preview */}
       <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 overflow-hidden flex flex-col">
         <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
-        <GradientPreview layers={layers} />
+        <GradientPreview
+          layers={layers}
+          activeLayerId={activeLayerId}
+          onSelectLayer={setActiveLayerId}
+          onUpdateLayer={updateLayer}
+        />
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>

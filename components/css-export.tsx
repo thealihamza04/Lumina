@@ -27,7 +27,10 @@ export function CSSExport({ layers }: CSSExportProps) {
       css += `/* Layer: ${layer.name} */\n`;
       css += `.layer-${index} {\n`;
       css += '  position: absolute;\n';
-      css += '  inset: 0;\n';
+      css += `  left: ${layer.x ?? 0}%;\n`;
+      css += `  top: ${layer.y ?? 0}%;\n`;
+      css += `  width: ${layer.width ?? 100}%;\n`;
+      css += `  height: ${layer.height ?? 100}%;\n`;
       if (layer.type === 'gradient') {
         css += `  background: ${generateGradientCSSString(layer.gradient!)};\n`;
       } else {
@@ -42,6 +45,9 @@ export function CSSExport({ layers }: CSSExportProps) {
 
       if (filters.length > 0) {
         css += `  filter: ${filters.join(' ')};\n`;
+      }
+      if ((layer.rotation ?? 0) !== 0) {
+        css += `  transform: rotate(${layer.rotation}deg);\n`;
       }
 
       css += `  z-index: ${layers.indexOf(layer)};\n`;
@@ -141,5 +147,4 @@ export function CSSExport({ layers }: CSSExportProps) {
     </Dialog>
   );
 }
-
 

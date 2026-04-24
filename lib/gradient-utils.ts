@@ -43,6 +43,11 @@ export interface Layer {
   noiseEnabled: boolean;
   noiseAmount: number;
   blendMode: 'normal' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten' | 'color-dodge' | 'color-burn' | 'hard-light' | 'soft-light' | 'difference' | 'exclusion' | 'hue' | 'saturation' | 'color' | 'luminosity';
+  x?: number; // 0-100
+  y?: number; // 0-100
+  width?: number; // 0-100
+  height?: number; // 0-100
+  rotation?: number; // degrees
 }
 
 export const generateGradientCSSString = (state: GradientState): string => {
@@ -102,6 +107,10 @@ export const getDefaultLayer = (id: string = Date.now().toString()): Layer => ({
   noiseEnabled: false,
   noiseAmount: 20,
   blendMode: 'normal',
+  x: 0,
+  y: 0,
+  width: 100,
+  height: 100,
+  rotation: 0,
 });
-
 
