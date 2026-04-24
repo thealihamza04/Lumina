@@ -19,12 +19,6 @@ import {
 } from 'lucide-react';
 import { GRADIENT_TEMPLATES, GradientTemplate } from '@/lib/templates';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -40,6 +34,9 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { generateGradientCSSString } from '@/lib/gradient-utils';
+import { CompositionEffectsPanel } from './composition-effects-panel';
+import { DEFAULT_COMPOSITION_EFFECTS } from '@/lib/effects';
+import type { CompositionEffects } from '@/lib/effects';
 
 export function GradientEditor() {
   const [layers, setLayers] = useState<Layer[]>([
@@ -48,6 +45,7 @@ export function GradientEditor() {
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [compositionEffects, setCompositionEffects] = useState<CompositionEffects>(DEFAULT_COMPOSITION_EFFECTS);
 
   const activeLayer = layers.find(l => l.id === activeLayerId) || layers[0];
 
@@ -82,18 +80,6 @@ export function GradientEditor() {
     setLayers(layers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
   };
 
-  const moveLayer = (id: string, direction: 'up' | 'down') => {
-    const index = layers.findIndex(l => l.id === id);
-    if (direction === 'up' && index > 0) {
-      const newLayers = [...layers];
-      [newLayers[index], newLayers[index - 1]] = [newLayers[index - 1], newLayers[index]];
-      setLayers(newLayers);
-    } else if (direction === 'down' && index < layers.length - 1) {
-      const newLayers = [...layers];
-      [newLayers[index], newLayers[index + 1]] = [newLayers[index + 1], newLayers[index]];
-      setLayers(newLayers);
-    }
-  };
 
   const openSettings = (id: string) => {
     setActiveLayerId(id);
@@ -305,9 +291,19 @@ export function GradientEditor() {
       </div>
 
       {/* Right Panel - Preview */}
-      <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 overflow-hidden flex flex-col">
-        <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
-        <GradientPreview layers={layers} />
+      <div className="flex-1 flex flex-col gap-4 overflow-hidden">
+        <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 overflow-hidden flex flex-col">
+          <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
+          <GradientPreview layers={layers} effects={compositionEffects} />
+        </div>
+
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+          <h3 className="mb-3 text-xs font-bold uppercase tracking-widest text-slate-500">Advanced Composition Effects</h3>
+          <CompositionEffectsPanel
+            effects={compositionEffects}
+            onChange={setCompositionEffects}
+          />
+        </div>
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>

@@ -124,3 +124,20 @@
     @apply bg-background text-foreground;
   }
 }
+@keyframes grain-shift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  25% {
+    transform: translate3d(-6%, 4%, 0);
+  }
+  50% {
+    transform: translate3d(7%, -5%, 0);
+  }
+  75% {
+    transform: translate3d(-4%, -6%, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
