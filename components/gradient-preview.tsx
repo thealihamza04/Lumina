@@ -198,6 +198,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
           const height = layer.height ?? DEFAULT_TRANSFORM.height;
           const rotation = layer.rotation ?? DEFAULT_TRANSFORM.rotation;
 
+          const activeLayerZIndex = layers.length + 10;
           const layerStyle: React.CSSProperties = {
             position: 'absolute',
             left: `${x}%`,
@@ -207,7 +208,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             opacity: layer.opacity,
             mixBlendMode: layer.blendMode,
             filter: filterValue,
-            zIndex: layers.indexOf(layer),
+            zIndex: isActive ? activeLayerZIndex : layers.indexOf(layer),
             transition: interaction ? 'none' : 'all 0.2s ease-in-out',
             transform: `rotate(${rotation}deg)`,
             transformOrigin: 'center center',
