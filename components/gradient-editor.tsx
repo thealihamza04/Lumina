@@ -199,7 +199,7 @@ export function GradientEditor() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-screen bg-[#e5e5e5] p-4 overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-4 h-screen bg-transparent p-4 overflow-hidden">
       {/* Left Panel - Layers & Export */}
       <div className="w-full lg:w-96 flex flex-col gap-4 overflow-hidden">
         <div className="bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-4 flex flex-col overflow-hidden">
