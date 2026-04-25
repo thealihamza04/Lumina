@@ -49,6 +49,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { generateGradientCSSString } from '@/lib/gradient-utils';
 
+const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
+  const next = [...items];
+  const [item] = next.splice(from, 1);
+  next.splice(to, 0, item);
+  return next;
+};
+
 export function GradientEditor() {
   const [layers, setLayers] = useState<Layer[]>([
     getDefaultLayer('1'),
@@ -56,7 +63,8 @@ export function GradientEditor() {
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
-  const [draggingLayerId, setDraggingLayerId] = useState<string | null>(null);
+  const [activeDragLayerId, setActiveDragLayerId] = useState<string | null>(null);
+  const [overLayerId, setOverLayerId] = useState<string | null>(null);
 
   const selectedLayer = layers.find(l => l.id === activeLayerId) || layers[0];
 
@@ -108,36 +116,47 @@ export function GradientEditor() {
     setLayers((prevLayers) => prevLayers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
   };
 
-  const moveLayerByDrag = (draggedId: string, targetId: string) => {
-    if (draggedId === targetId) return;
+  const reorderLayers = (draggedId: string, targetId: string) => {
+    if (!draggedId || !targetId || draggedId === targetId) return;
     setLayers((prevLayers) => {
       const draggedIndex = prevLayers.findIndex((l) => l.id === draggedId);
       const targetIndex = prevLayers.findIndex((l) => l.id === targetId);
       if (draggedIndex === -1 || targetIndex === -1) return prevLayers;
-      const reordered = [...prevLayers];
-      const [draggedLayer] = reordered.splice(draggedIndex, 1);
-      reordered.splice(targetIndex, 0, draggedLayer);
-      return reordered;
+      return arrayMove(prevLayers, draggedIndex, targetIndex);
     });
   };
 
   const handleLayerDragStart = (event: DragEvent<HTMLDivElement>, layerId: string) => {
-    setDraggingLayerId(layerId);
+    setActiveDragLayerId(layerId);
+    setOverLayerId(layerId);
     event.dataTransfer.setData('text/plain', layerId);
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleLayerDragEnter = (targetLayerId: string) => {
-    if (!draggingLayerId || draggingLayerId === targetLayerId) return;
-    moveLayerByDrag(draggingLayerId, targetLayerId);
+  const handleLayerDragOver = (event: DragEvent<HTMLDivElement>, targetLayerId: string) => {
+    event.preventDefault();
+    if (!activeDragLayerId || activeDragLayerId === targetLayerId) return;
+    if (overLayerId !== targetLayerId) {
+      setOverLayerId(targetLayerId);
+    }
   };
 
-  const handleLayerDrop = (event: DragEvent<HTMLDivElement>, targetLayerId: string) => {
+  const handleLayerDrop = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    const draggedLayerId = event.dataTransfer.getData('text/plain') || draggingLayerId;
-    if (!draggedLayerId) return;
-    moveLayerByDrag(draggedLayerId, targetLayerId);
-    setDraggingLayerId(null);
+    const draggedLayerId = event.dataTransfer.getData('text/plain') || activeDragLayerId;
+    if (draggedLayerId && overLayerId) {
+      reorderLayers(draggedLayerId, overLayerId);
+    }
+    setActiveDragLayerId(null);
+    setOverLayerId(null);
+  };
+
+  const handleLayerDragEnd = () => {
+    if (activeDragLayerId && overLayerId) {
+      reorderLayers(activeDragLayerId, overLayerId);
+    }
+    setActiveDragLayerId(null);
+    setOverLayerId(null);
   };
 
   const openSettings = (id: string) => {
@@ -294,15 +313,11 @@ export function GradientEditor() {
               </div>
             </div>
             <div className="space-y-2 overflow-y-auto pr-2 pb-4 h-full">
-              {layers.map((layer, index) => (
+              {layers.map((layer) => (
                 <div
                   key={layer.id}
-                  draggable
-                  onDragStart={(event) => handleLayerDragStart(event, layer.id)}
-                  onDragEnd={() => setDraggingLayerId(null)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDragEnter={() => handleLayerDragEnter(layer.id)}
-                  onDrop={(event) => handleLayerDrop(event, layer.id)}
+                  onDragOver={(event) => handleLayerDragOver(event, layer.id)}
+                  onDrop={handleLayerDrop}
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-500/10'
@@ -310,8 +325,12 @@ export function GradientEditor() {
                     }`}
                 >
                   <div
-                    className="text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing"
+                    className={`text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing ${activeDragLayerId === layer.id ? 'opacity-60' : ''}`}
                     title="Drag to reorder layers"
+                    draggable
+                    onDragStart={(event) => handleLayerDragStart(event, layer.id)}
+                    onDragEnd={handleLayerDragEnd}
+                    onClick={(event) => event.stopPropagation()}
                   >
                     <GripVertical className="w-3.5 h-3.5" />
                   </div>
