@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import {
   RotateCcw,
   Plus,
+  ChevronDown,
+  GripVertical,
   Layers,
   Trash2,
   Eye,
@@ -39,6 +41,12 @@ import {
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { generateGradientCSSString } from '@/lib/gradient-utils';
 
 export function GradientEditor() {
@@ -48,8 +56,9 @@ export function GradientEditor() {
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [draggingLayerId, setDraggingLayerId] = useState<string | null>(null);
 
-  const activeLayer = layers.find(l => l.id === activeLayerId) || layers[0];
+  const selectedLayer = layers.find(l => l.id === activeLayerId) || layers[0];
 
   const resetLayers = () => {
     const defaultLayer = getDefaultLayer('1');
@@ -57,8 +66,23 @@ export function GradientEditor() {
     setActiveLayerId('1');
   };
 
-  const addLayer = () => {
+  const addLayer = (preset: 'default' | 'blur' | 'noise' = 'default') => {
     const newLayer = getDefaultLayer();
+    if (preset === 'blur') {
+      newLayer.name = `Blur ${newLayer.name}`;
+      newLayer.blurEnabled = true;
+      newLayer.blurAmount = 36;
+      newLayer.noiseEnabled = false;
+      newLayer.preset = 'blur';
+    }
+    if (preset === 'noise') {
+      newLayer.name = `Noise ${newLayer.name}`;
+      newLayer.noiseEnabled = true;
+      newLayer.noiseAmount = 55;
+      newLayer.opacity = 0.5;
+      newLayer.blendMode = 'overlay';
+      newLayer.preset = 'noise';
+    }
     setLayers([newLayer, ...layers]);
     setActiveLayerId(newLayer.id);
     setIsSettingsOpen(true);
@@ -82,17 +106,15 @@ export function GradientEditor() {
     setLayers(layers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
   };
 
-  const moveLayer = (id: string, direction: 'up' | 'down') => {
-    const index = layers.findIndex(l => l.id === id);
-    if (direction === 'up' && index > 0) {
-      const newLayers = [...layers];
-      [newLayers[index], newLayers[index - 1]] = [newLayers[index - 1], newLayers[index]];
-      setLayers(newLayers);
-    } else if (direction === 'down' && index < layers.length - 1) {
-      const newLayers = [...layers];
-      [newLayers[index], newLayers[index + 1]] = [newLayers[index + 1], newLayers[index]];
-      setLayers(newLayers);
-    }
+  const moveLayerByDrag = (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const draggedIndex = layers.findIndex((l) => l.id === draggedId);
+    const targetIndex = layers.findIndex((l) => l.id === targetId);
+    if (draggedIndex === -1 || targetIndex === -1) return;
+    const reordered = [...layers];
+    const [draggedLayer] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, draggedLayer);
+    setLayers(reordered);
   };
 
   const openSettings = (id: string) => {
@@ -112,7 +134,13 @@ export function GradientEditor() {
             ...s,
             id: `stop-${layerId}-${si}`
           }))
-        } : undefined
+        } : undefined,
+        x: l.x ?? 0,
+        y: l.y ?? 0,
+        width: l.width ?? 100,
+        height: l.height ?? 100,
+        rotation: l.rotation ?? 0,
+        preset: l.preset ?? 'default',
       } as Layer;
     });
     setLayers(newLayers);
@@ -208,25 +236,65 @@ export function GradientEditor() {
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <Layers className="w-3.5 h-3.5" /> Layers ({layers.length})
               </h2>
-              <Button
-                size="sm"
-                variant="default"
-                className="h-7 px-3 text-[10px] font-bold uppercase tracking-tight gap-1.5"
-                onClick={addLayer}
-              >
-                <Plus className="w-3 h-3" /> New Layer
-              </Button>
+              <div className="flex items-center">
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="h-7 px-3 text-[10px] font-bold uppercase tracking-tight gap-1.5 rounded-r-none"
+                  onClick={() => addLayer('default')}
+                >
+                  <Plus className="w-3 h-3" /> New Layer
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-7 px-2 rounded-l-none border-l border-white/20"
+                      aria-label="Choose layer preset"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => addLayer('default')}>
+                      Standard Layer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('blur')}>
+                      Blur Layer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('noise')}>
+                      Noise Layer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
             <div className="space-y-2 overflow-y-auto pr-2 pb-4 h-full">
               {layers.map((layer, index) => (
                 <div
                   key={layer.id}
+                  draggable
+                  onDragStart={() => setDraggingLayerId(layer.id)}
+                  onDragEnd={() => setDraggingLayerId(null)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (!draggingLayerId) return;
+                    moveLayerByDrag(draggingLayerId, layer.id);
+                    setDraggingLayerId(null);
+                  }}
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-500/10'
                     : 'bg-white border border-slate-100 hover:border-slate-300 hover:shadow-sm'
                     }`}
                 >
+                  <div
+                    className="text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing"
+                    title="Drag to reorder layers"
+                  >
+                    <GripVertical className="w-3.5 h-3.5" />
+                  </div>
                   {/* Layer Preview Mini */}
                   <div
                     className="w-8 h-8 rounded-md shadow-inner border border-slate-200 flex-shrink-0 relative overflow-hidden bg-white"
@@ -241,7 +309,11 @@ export function GradientEditor() {
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: layer.type === 'gradient' ? layer.gradient?.stops[0].color : layer.color,
+                        background: layer.preset === 'blur'
+                          ? 'rgba(148, 163, 184, 0.2)'
+                          : layer.type === 'gradient'
+                            ? layer.gradient?.stops[0].color
+                            : layer.color,
                         opacity: layer.visible ? 1 : 0.2
                       }}
                     />
@@ -252,7 +324,7 @@ export function GradientEditor() {
                       {layer.name}
                     </span>
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
-                      {layer.type} • {layer.blendMode}
+                      {(layer.preset ?? layer.type)} • {layer.blendMode}
                     </span>
                   </div>
 
@@ -307,7 +379,12 @@ export function GradientEditor() {
       {/* Right Panel - Preview */}
       <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 overflow-hidden flex flex-col">
         <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
-        <GradientPreview layers={layers} />
+        <GradientPreview
+          layers={layers}
+          activeLayerId={activeLayerId}
+          onSelectLayer={setActiveLayerId}
+          onUpdateLayer={updateLayer}
+        />
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
@@ -321,9 +398,9 @@ export function GradientEditor() {
                 </SheetDescription>
               </SheetHeader>
 
-              {activeLayer && (
+              {selectedLayer && (
                 <ControlPanel
-                  layer={activeLayer}
+                  layer={selectedLayer}
                   onUpdateLayer={updateLayer}
                 />
               )}
