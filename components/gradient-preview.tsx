@@ -193,7 +193,6 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             filterValue = `url(#filter-noise-${layer.id})`;
           }
 
-          const isActive = layer.id === activeLayerId;
           const x = layer.x ?? DEFAULT_TRANSFORM.x;
           const y = layer.y ?? DEFAULT_TRANSFORM.y;
           const width = layer.width ?? DEFAULT_TRANSFORM.width;
@@ -262,6 +261,41 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             </div>
           );
         })}
+        {selectedLayerOverlay && (
+          <div
+            style={{
+              position: 'absolute',
+              left: `${selectedLayerOverlay.x ?? DEFAULT_TRANSFORM.x}%`,
+              top: `${selectedLayerOverlay.y ?? DEFAULT_TRANSFORM.y}%`,
+              width: `${selectedLayerOverlay.width ?? DEFAULT_TRANSFORM.width}%`,
+              height: `${selectedLayerOverlay.height ?? DEFAULT_TRANSFORM.height}%`,
+              zIndex: layers.length + 50,
+              transform: `rotate(${selectedLayerOverlay.rotation ?? DEFAULT_TRANSFORM.rotation}deg)`,
+              transformOrigin: 'center center',
+              transition: interaction ? 'none' : 'all 0.2s ease-in-out',
+              outline: '2px solid rgba(59, 130, 246, 0.85)',
+              cursor: 'move',
+            }}
+            onPointerDown={(event) => startMove(event, selectedLayerOverlay)}
+          >
+            <div
+              className="absolute -top-2 -left-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nwse-resize"
+              onPointerDown={(event) => startResize(event, selectedLayerOverlay, 'nw')}
+            />
+            <div
+              className="absolute -top-2 -right-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nesw-resize"
+              onPointerDown={(event) => startResize(event, selectedLayerOverlay, 'ne')}
+            />
+            <div
+              className="absolute -bottom-2 -left-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nesw-resize"
+              onPointerDown={(event) => startResize(event, selectedLayerOverlay, 'sw')}
+            />
+            <div
+              className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nwse-resize"
+              onPointerDown={(event) => startResize(event, selectedLayerOverlay, 'se')}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

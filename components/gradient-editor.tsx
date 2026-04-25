@@ -58,7 +58,7 @@ export function GradientEditor() {
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [draggingLayerId, setDraggingLayerId] = useState<string | null>(null);
 
-  const activeLayer = layers.find(l => l.id === activeLayerId) || layers[0];
+  const selectedLayer = layers.find(l => l.id === activeLayerId) || layers[0];
 
   const resetLayers = () => {
     const defaultLayer = getDefaultLayer('1');
@@ -398,9 +398,9 @@ export function GradientEditor() {
                 </SheetDescription>
               </SheetHeader>
 
-              {activeLayer && (
+              {selectedLayer && (
                 <ControlPanel
-                  layer={activeLayer}
+                  layer={selectedLayer}
                   onUpdateLayer={updateLayer}
                 />
               )}
