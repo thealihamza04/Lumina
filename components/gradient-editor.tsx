@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { DragEvent, useState } from 'react';
 import { Layer, getDefaultLayer } from '@/lib/gradient-utils';
 import { ControlPanel } from './control-panel';
 import { GradientPreview } from './gradient-preview';
@@ -83,38 +83,61 @@ export function GradientEditor() {
       newLayer.blendMode = 'overlay';
       newLayer.preset = 'noise';
     }
-    setLayers([newLayer, ...layers]);
+    setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
     setIsSettingsOpen(true);
   };
 
   const deleteLayer = (id: string) => {
     if (layers.length > 1) {
-      const newLayers = layers.filter(l => l.id !== id);
-      setLayers(newLayers);
-      if (activeLayerId === id) {
-        setActiveLayerId(newLayers[0].id);
-      }
+      setLayers((prevLayers) => {
+        const newLayers = prevLayers.filter(l => l.id !== id);
+        if (activeLayerId === id && newLayers.length > 0) {
+          setActiveLayerId(newLayers[0].id);
+        }
+        return newLayers;
+      });
     }
   };
 
   const updateLayer = (updatedLayer: Layer) => {
-    setLayers(layers.map(l => l.id === updatedLayer.id ? updatedLayer : l));
+    setLayers((prevLayers) => prevLayers.map(l => l.id === updatedLayer.id ? updatedLayer : l));
   };
 
   const toggleVisibility = (id: string) => {
-    setLayers(layers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
+    setLayers((prevLayers) => prevLayers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
   };
 
   const moveLayerByDrag = (draggedId: string, targetId: string) => {
     if (draggedId === targetId) return;
-    const draggedIndex = layers.findIndex((l) => l.id === draggedId);
-    const targetIndex = layers.findIndex((l) => l.id === targetId);
-    if (draggedIndex === -1 || targetIndex === -1) return;
-    const reordered = [...layers];
-    const [draggedLayer] = reordered.splice(draggedIndex, 1);
-    reordered.splice(targetIndex, 0, draggedLayer);
-    setLayers(reordered);
+    setLayers((prevLayers) => {
+      const draggedIndex = prevLayers.findIndex((l) => l.id === draggedId);
+      const targetIndex = prevLayers.findIndex((l) => l.id === targetId);
+      if (draggedIndex === -1 || targetIndex === -1) return prevLayers;
+      const reordered = [...prevLayers];
+      const [draggedLayer] = reordered.splice(draggedIndex, 1);
+      reordered.splice(targetIndex, 0, draggedLayer);
+      return reordered;
+    });
+  };
+
+  const handleLayerDragStart = (event: DragEvent<HTMLDivElement>, layerId: string) => {
+    setDraggingLayerId(layerId);
+    event.dataTransfer.setData('text/plain', layerId);
+    event.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleLayerDragEnter = (targetLayerId: string) => {
+    if (!draggingLayerId || draggingLayerId === targetLayerId) return;
+    moveLayerByDrag(draggingLayerId, targetLayerId);
+  };
+
+  const handleLayerDrop = (event: DragEvent<HTMLDivElement>, targetLayerId: string) => {
+    event.preventDefault();
+    const draggedLayerId = event.dataTransfer.getData('text/plain') || draggingLayerId;
+    if (!draggedLayerId) return;
+    moveLayerByDrag(draggedLayerId, targetLayerId);
+    setDraggingLayerId(null);
   };
 
   const openSettings = (id: string) => {
@@ -275,14 +298,11 @@ export function GradientEditor() {
                 <div
                   key={layer.id}
                   draggable
-                  onDragStart={() => setDraggingLayerId(layer.id)}
+                  onDragStart={(event) => handleLayerDragStart(event, layer.id)}
                   onDragEnd={() => setDraggingLayerId(null)}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => {
-                    if (!draggingLayerId) return;
-                    moveLayerByDrag(draggingLayerId, layer.id);
-                    setDraggingLayerId(null);
-                  }}
+                  onDragEnter={() => handleLayerDragEnter(layer.id)}
+                  onDrop={(event) => handleLayerDrop(event, layer.id)}
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-500/10'
