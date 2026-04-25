@@ -206,9 +206,6 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             top: `${y}%`,
             width: `${width}%`,
             height: `${height}%`,
-            opacity: layer.opacity,
-            mixBlendMode: layer.blendMode,
-            filter: filterValue,
             zIndex: layers.length - index,
             transition: interaction ? 'none' : 'all 0.2s ease-in-out',
             transform: `rotate(${rotation}deg)`,
@@ -218,13 +215,21 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             outlineOffset: 0,
           };
 
+          const contentStyle: React.CSSProperties = {
+            position: 'absolute',
+            inset: 0,
+            opacity: layer.opacity,
+            mixBlendMode: layer.blendMode,
+            filter: filterValue,
+          };
+
           if (layer.preset === 'blur') {
-            layerStyle.backdropFilter = `blur(${layer.blurAmount}px)`;
-            layerStyle.backgroundColor = 'transparent';
+            contentStyle.backdropFilter = `blur(${layer.blurAmount}px)`;
+            contentStyle.backgroundColor = 'transparent';
           } else if (layer.type === 'gradient' && layer.gradient) {
-            layerStyle.background = generateGradientCSSString(layer.gradient);
+            contentStyle.background = generateGradientCSSString(layer.gradient);
           } else {
-            layerStyle.backgroundColor = layer.color;
+            contentStyle.backgroundColor = layer.color;
           }
 
           return (
@@ -233,6 +238,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
               style={layerStyle}
               onPointerDown={(event) => startMove(event, layer)}
             >
+              <div style={contentStyle} />
               {isActive && (
                 <>
                   <div
