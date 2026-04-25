@@ -23,7 +23,8 @@ export function CSSExport({ layers }: CSSExportProps) {
   const generateFullCSS = () => {
     let css = '/* --- Container Styles --- */\n.gradient-container {\n  position: relative;\n  width: 100%;\n  height: 100vh;\n  overflow: hidden;\n  background: #fff;\n}\n\n';
 
-    layers.filter(l => l.visible).forEach((layer, index) => {
+    layers.forEach((layer, index) => {
+      if (!layer.visible) return;
       css += `/* Layer: ${layer.name} */\n`;
       css += `.layer-${index} {\n`;
       css += '  position: absolute;\n';
@@ -31,7 +32,7 @@ export function CSSExport({ layers }: CSSExportProps) {
       css += `  top: ${layer.y ?? 0}%;\n`;
       css += `  width: ${layer.width ?? 100}%;\n`;
       css += `  height: ${layer.height ?? 100}%;\n`;
-      if (layer.type === 'gradient') {
+
         css += `  background: ${generateGradientCSSString(layer.gradient!)};\n`;
       } else {
         css += `  background-color: ${layer.color};\n`;
@@ -40,7 +41,7 @@ export function CSSExport({ layers }: CSSExportProps) {
       if (layer.blendMode !== 'normal') css += `  mix-blend-mode: ${layer.blendMode};\n`;
 
       const filters = [];
-      if (layer.blurEnabled) filters.push(`blur(${layer.blurAmount}px)`);
+      if (layer.blurEnabled && layer.preset !== 'blur') filters.push(`blur(${layer.blurAmount}px)`);
       if (layer.noiseEnabled) filters.push(`url(#noise-${layer.id})`);
 
       if (filters.length > 0) {
@@ -50,7 +51,7 @@ export function CSSExport({ layers }: CSSExportProps) {
         css += `  transform: rotate(${layer.rotation}deg);\n`;
       }
 
-      css += `  z-index: ${layers.indexOf(layer)};\n`;
+      css += `  z-index: ${layers.length - index};\n`;
       css += '}\n\n';
     });
 
@@ -147,4 +148,3 @@ export function CSSExport({ layers }: CSSExportProps) {
     </Dialog>
   );
 }
-

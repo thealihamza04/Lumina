@@ -179,11 +179,13 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
           }}
         />
 
-        {[...layers].reverse().map((layer) => {
+
           if (!layer.visible) return null;
 
           let filterValue = 'none';
-          if (layer.blurEnabled && layer.noiseEnabled) {
+          if (layer.preset === 'blur') {
+            filterValue = 'none';
+          } else if (layer.blurEnabled && layer.noiseEnabled) {
             filterValue = `blur(${layer.blurAmount}px) url(#filter-noise-${layer.id})`;
           } else if (layer.blurEnabled) {
             filterValue = `blur(${layer.blurAmount}px)`;
@@ -198,17 +200,14 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
           const height = layer.height ?? DEFAULT_TRANSFORM.height;
           const rotation = layer.rotation ?? DEFAULT_TRANSFORM.rotation;
 
-          const activeLayerZIndex = layers.length + 10;
+
           const layerStyle: React.CSSProperties = {
             position: 'absolute',
             left: `${x}%`,
             top: `${y}%`,
             width: `${width}%`,
             height: `${height}%`,
-            opacity: layer.opacity,
-            mixBlendMode: layer.blendMode,
-            filter: filterValue,
-            zIndex: isActive ? activeLayerZIndex : layers.indexOf(layer),
+            zIndex: layers.length - index,
             transition: interaction ? 'none' : 'all 0.2s ease-in-out',
             transform: `rotate(${rotation}deg)`,
             transformOrigin: 'center center',
@@ -217,10 +216,21 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             outlineOffset: 0,
           };
 
-          if (layer.type === 'gradient' && layer.gradient) {
-            layerStyle.background = generateGradientCSSString(layer.gradient);
+          const contentStyle: React.CSSProperties = {
+            position: 'absolute',
+            inset: 0,
+            opacity: layer.opacity,
+            mixBlendMode: layer.blendMode,
+            filter: filterValue,
+          };
+
+          if (layer.preset === 'blur') {
+            contentStyle.backdropFilter = `blur(${layer.blurAmount}px)`;
+            contentStyle.backgroundColor = 'transparent';
+          } else if (layer.type === 'gradient' && layer.gradient) {
+            contentStyle.background = generateGradientCSSString(layer.gradient);
           } else {
-            layerStyle.backgroundColor = layer.color;
+            contentStyle.backgroundColor = layer.color;
           }
 
           return (
@@ -229,6 +239,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
               style={layerStyle}
               onPointerDown={(event) => startMove(event, layer)}
             >
+              <div style={contentStyle} />
               {isActive && (
                 <>
                   <div

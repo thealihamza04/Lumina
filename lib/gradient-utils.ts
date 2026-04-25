@@ -48,6 +48,7 @@ export interface Layer {
   width?: number; // 0-100
   height?: number; // 0-100
   rotation?: number; // degrees
+  preset?: 'default' | 'blur' | 'noise';
 }
 
 export const generateGradientCSSString = (state: GradientState): string => {
@@ -112,5 +113,5 @@ export const getDefaultLayer = (id: string = Date.now().toString()): Layer => ({
   width: 100,
   height: 100,
   rotation: 0,
+  preset: 'default',
 });
-
