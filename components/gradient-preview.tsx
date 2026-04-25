@@ -134,8 +134,6 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
     });
   };
 
-  const activeLayer = layers.find((layer) => layer.id === activeLayerId && layer.visible);
-
   return (
     <div className="flex flex-col gap-6 h-full min-h-0">
       {/* Generate SVG filters for each layer with noise */}
@@ -195,6 +193,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             filterValue = `url(#filter-noise-${layer.id})`;
           }
 
+          const isActive = layer.id === activeLayerId;
           const x = layer.x ?? DEFAULT_TRANSFORM.x;
           const y = layer.y ?? DEFAULT_TRANSFORM.y;
           const width = layer.width ?? DEFAULT_TRANSFORM.width;
@@ -211,7 +210,9 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             transition: interaction ? 'none' : 'all 0.2s ease-in-out',
             transform: `rotate(${rotation}deg)`,
             transformOrigin: 'center center',
-            cursor: 'pointer',
+            cursor: isActive ? 'move' : 'pointer',
+            outline: isActive ? '2px solid rgba(59, 130, 246, 0.85)' : 'none',
+            outlineOffset: 0,
           };
 
           const contentStyle: React.CSSProperties = {
@@ -238,6 +239,26 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
               onPointerDown={(event) => startMove(event, layer)}
             >
               <div style={contentStyle} />
+              {isActive && (
+                <>
+                  <div
+                    className="absolute -top-2 -left-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nwse-resize"
+                    onPointerDown={(event) => startResize(event, layer, 'nw')}
+                  />
+                  <div
+                    className="absolute -top-2 -right-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nesw-resize"
+                    onPointerDown={(event) => startResize(event, layer, 'ne')}
+                  />
+                  <div
+                    className="absolute -bottom-2 -left-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nesw-resize"
+                    onPointerDown={(event) => startResize(event, layer, 'sw')}
+                  />
+                  <div
+                    className="absolute -bottom-2 -right-2 w-4 h-4 rounded-full border-2 border-white bg-blue-600 shadow-sm cursor-nwse-resize"
+                    onPointerDown={(event) => startResize(event, layer, 'se')}
+                  />
+                </>
+              )}
             </div>
           );
         })}
