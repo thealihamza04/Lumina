@@ -15,6 +15,7 @@ export function ControlPanel({
   layer,
   onUpdateLayer,
 }: ControlPanelProps) {
+  const isBlurOnlyLayer = layer.preset === 'blur';
   const gradient = layer.gradient!;
 
   const updateStop = (updatedStop: ColorStop) => {
@@ -61,6 +62,47 @@ export function ControlPanel({
       gradient: { ...gradient, ...updates }
     });
   };
+
+  if (isBlurOnlyLayer) {
+    return (
+      <div className="flex flex-col gap-6 h-full">
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Layer Name</label>
+          <input
+            type="text"
+            value={layer.name}
+            onChange={(e) => onUpdateLayer({ ...layer, name: e.target.value })}
+            className="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
+        </div>
+        <div className="space-y-4 border-t border-slate-100 pt-4">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-slate-500">Blur: {layer.blurAmount}px</label>
+            <button
+              onClick={() => onUpdateLayer({ ...layer, blurEnabled: !layer.blurEnabled })}
+              className={`w-8 h-4 rounded-full transition-colors relative ${layer.blurEnabled ? 'bg-blue-500' : 'bg-slate-300'
+                }`}
+            >
+              <div
+                className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${layer.blurEnabled ? 'right-0.5' : 'left-0.5'
+                  }`}
+              />
+            </button>
+          </div>
+          {layer.blurEnabled && (
+            <Slider
+              min={0}
+              max={100}
+              step={1}
+              value={[layer.blurAmount]}
+              onValueChange={([value]) => onUpdateLayer({ ...layer, blurAmount: value })}
+              className="mt-2"
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -399,4 +441,3 @@ export function ControlPanel({
     </div>
   );
 }
-

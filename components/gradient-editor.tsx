@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Plus,
   ChevronDown,
+  GripVertical,
   Layers,
   Trash2,
   Eye,
@@ -55,6 +56,7 @@ export function GradientEditor() {
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
+  const [draggingLayerId, setDraggingLayerId] = useState<string | null>(null);
 
   const activeLayer = layers.find(l => l.id === activeLayerId) || layers[0];
 
@@ -70,7 +72,8 @@ export function GradientEditor() {
       newLayer.name = `Blur ${newLayer.name}`;
       newLayer.blurEnabled = true;
       newLayer.blurAmount = 36;
-      newLayer.opacity = 0.85;
+      newLayer.noiseEnabled = false;
+      newLayer.preset = 'blur';
     }
     if (preset === 'noise') {
       newLayer.name = `Noise ${newLayer.name}`;
@@ -78,6 +81,7 @@ export function GradientEditor() {
       newLayer.noiseAmount = 55;
       newLayer.opacity = 0.5;
       newLayer.blendMode = 'overlay';
+      newLayer.preset = 'noise';
     }
     setLayers([newLayer, ...layers]);
     setActiveLayerId(newLayer.id);
@@ -102,17 +106,15 @@ export function GradientEditor() {
     setLayers(layers.map(l => l.id === id ? { ...l, visible: !l.visible } : l));
   };
 
-  const moveLayer = (id: string, direction: 'up' | 'down') => {
-    const index = layers.findIndex(l => l.id === id);
-    if (direction === 'up' && index > 0) {
-      const newLayers = [...layers];
-      [newLayers[index], newLayers[index - 1]] = [newLayers[index - 1], newLayers[index]];
-      setLayers(newLayers);
-    } else if (direction === 'down' && index < layers.length - 1) {
-      const newLayers = [...layers];
-      [newLayers[index], newLayers[index + 1]] = [newLayers[index + 1], newLayers[index]];
-      setLayers(newLayers);
-    }
+  const moveLayerByDrag = (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const draggedIndex = layers.findIndex((l) => l.id === draggedId);
+    const targetIndex = layers.findIndex((l) => l.id === targetId);
+    if (draggedIndex === -1 || targetIndex === -1) return;
+    const reordered = [...layers];
+    const [draggedLayer] = reordered.splice(draggedIndex, 1);
+    reordered.splice(targetIndex, 0, draggedLayer);
+    setLayers(reordered);
   };
 
   const openSettings = (id: string) => {
@@ -138,6 +140,7 @@ export function GradientEditor() {
         width: l.width ?? 100,
         height: l.height ?? 100,
         rotation: l.rotation ?? 0,
+        preset: l.preset ?? 'default',
       } as Layer;
     });
     setLayers(newLayers);
@@ -271,12 +274,27 @@ export function GradientEditor() {
               {layers.map((layer, index) => (
                 <div
                   key={layer.id}
+                  draggable
+                  onDragStart={() => setDraggingLayerId(layer.id)}
+                  onDragEnd={() => setDraggingLayerId(null)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (!draggingLayerId) return;
+                    moveLayerByDrag(draggingLayerId, layer.id);
+                    setDraggingLayerId(null);
+                  }}
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-500/10'
                     : 'bg-white border border-slate-100 hover:border-slate-300 hover:shadow-sm'
                     }`}
                 >
+                  <div
+                    className="text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing"
+                    title="Drag to reorder layers"
+                  >
+                    <GripVertical className="w-3.5 h-3.5" />
+                  </div>
                   {/* Layer Preview Mini */}
                   <div
                     className="w-8 h-8 rounded-md shadow-inner border border-slate-200 flex-shrink-0 relative overflow-hidden bg-white"
@@ -291,7 +309,11 @@ export function GradientEditor() {
                     <div
                       className="absolute inset-0"
                       style={{
-                        background: layer.type === 'gradient' ? layer.gradient?.stops[0].color : layer.color,
+                        background: layer.preset === 'blur'
+                          ? 'rgba(148, 163, 184, 0.2)'
+                          : layer.type === 'gradient'
+                            ? layer.gradient?.stops[0].color
+                            : layer.color,
                         opacity: layer.visible ? 1 : 0.2
                       }}
                     />
@@ -302,7 +324,7 @@ export function GradientEditor() {
                       {layer.name}
                     </span>
                     <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
-                      {layer.type} • {layer.blendMode}
+                      {(layer.preset ?? layer.type)} • {layer.blendMode}
                     </span>
                   </div>
 
