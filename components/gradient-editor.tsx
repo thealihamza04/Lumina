@@ -1,6 +1,6 @@
 'use client';
 
-import { DragEvent, useState } from 'react';
+import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
 import { Layer, getDefaultLayer } from '@/lib/gradient-utils';
 import { ControlPanel } from './control-panel';
 import { GradientPreview } from './gradient-preview';
@@ -65,6 +65,14 @@ export function GradientEditor() {
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [activeDragLayerId, setActiveDragLayerId] = useState<string | null>(null);
   const [overLayerId, setOverLayerId] = useState<string | null>(null);
+  const [pointerY, setPointerY] = useState<number | null>(null);
+  const [dragGhost, setDragGhost] = useState<{
+    left: number;
+    width: number;
+    height: number;
+    offsetY: number;
+  } | null>(null);
+  const layerRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const selectedLayer = layers.find(l => l.id === activeLayerId) || layers[0];
 
@@ -126,38 +134,77 @@ export function GradientEditor() {
     });
   };
 
-  const handleLayerDragStart = (event: DragEvent<HTMLDivElement>, layerId: string) => {
+  const getLayerIdByPointer = (y: number) => {
+    let closestId: string | null = null;
+    let minDistance = Number.POSITIVE_INFINITY;
+
+    for (const layer of layers) {
+      const row = layerRowRefs.current[layer.id];
+      if (!row) continue;
+      const rect = row.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      const distance = Math.abs(y - midY);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestId = layer.id;
+      }
+    }
+
+    return closestId;
+  };
+
+  const handleLayerPointerDown = (event: ReactPointerEvent<HTMLDivElement>, layerId: string) => {
+    if (event.button !== 0) return;
+    const row = layerRowRefs.current[layerId];
+    if (!row) return;
+
+    event.preventDefault();
+
+    const rect = row.getBoundingClientRect();
     setActiveDragLayerId(layerId);
     setOverLayerId(layerId);
-    event.dataTransfer.setData('text/plain', layerId);
-    event.dataTransfer.effectAllowed = 'move';
+    setPointerY(event.clientY);
+    setDragGhost({
+      left: rect.left,
+      width: rect.width,
+      height: rect.height,
+      offsetY: event.clientY - rect.top,
+    });
+    event.currentTarget.setPointerCapture(event.pointerId);
   };
 
-  const handleLayerDragOver = (event: DragEvent<HTMLDivElement>, targetLayerId: string) => {
-    event.preventDefault();
-    if (!activeDragLayerId || activeDragLayerId === targetLayerId) return;
-    if (overLayerId !== targetLayerId) {
-      setOverLayerId(targetLayerId);
-    }
-  };
-
-  const handleLayerDrop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const draggedLayerId = event.dataTransfer.getData('text/plain') || activeDragLayerId;
-    if (draggedLayerId && overLayerId) {
-      reorderLayers(draggedLayerId, overLayerId);
-    }
+  const handleLayerPointerUp = () => {
     setActiveDragLayerId(null);
     setOverLayerId(null);
+    setPointerY(null);
+    setDragGhost(null);
   };
 
-  const handleLayerDragEnd = () => {
-    if (activeDragLayerId && overLayerId) {
-      reorderLayers(activeDragLayerId, overLayerId);
-    }
-    setActiveDragLayerId(null);
-    setOverLayerId(null);
-  };
+  useEffect(() => {
+    if (!activeDragLayerId) return;
+
+    const onPointerMove = (event: PointerEvent) => {
+      setPointerY(event.clientY);
+      const targetId = getLayerIdByPointer(event.clientY);
+      if (!targetId || targetId === overLayerId) return;
+      setOverLayerId(targetId);
+      reorderLayers(activeDragLayerId, targetId);
+    };
+
+    const onPointerUp = () => {
+      handleLayerPointerUp();
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+
+    return () => {
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointercancel', onPointerUp);
+    };
+  }, [activeDragLayerId, overLayerId, layers]);
 
   const openSettings = (id: string) => {
     setActiveLayerId(id);
@@ -316,20 +363,23 @@ export function GradientEditor() {
               {layers.map((layer) => (
                 <div
                   key={layer.id}
-                  onDragOver={(event) => handleLayerDragOver(event, layer.id)}
-                  onDrop={handleLayerDrop}
+                  ref={(node) => {
+                    layerRowRefs.current[layer.id] = node;
+                  }}
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-500/10'
                     : 'bg-white border border-slate-100 hover:border-slate-300 hover:shadow-sm'
+                    } ${activeDragLayerId === layer.id ? 'opacity-20 scale-[0.99]' : ''
+                    } ${overLayerId === layer.id && activeDragLayerId !== layer.id ? 'ring-2 ring-blue-300 border-blue-300 bg-blue-50/60' : ''
                     }`}
                 >
                   <div
-                    className={`text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing ${activeDragLayerId === layer.id ? 'opacity-60' : ''}`}
+                    className={`text-slate-400 hover:text-slate-600 cursor-grab active:cursor-grabbing touch-none ${activeDragLayerId === layer.id ? 'opacity-60' : ''}`}
                     title="Drag to reorder layers"
-                    draggable
-                    onDragStart={(event) => handleLayerDragStart(event, layer.id)}
-                    onDragEnd={handleLayerDragEnd}
+                    onPointerDown={(event) => handleLayerPointerDown(event, layer.id)}
+                    onPointerUp={handleLayerPointerUp}
+                    onPointerCancel={handleLayerPointerUp}
                     onClick={(event) => event.stopPropagation()}
                   >
                     <GripVertical className="w-3.5 h-3.5" />
@@ -406,6 +456,30 @@ export function GradientEditor() {
                 </div>
               ))}
             </div>
+            {activeDragLayerId && dragGhost && pointerY !== null && (
+              <div
+                className="fixed z-50 pointer-events-none rounded-lg border border-blue-300 bg-white/95 shadow-2xl backdrop-blur-sm transition-transform duration-75"
+                style={{
+                  left: dragGhost.left,
+                  top: pointerY - dragGhost.offsetY,
+                  width: dragGhost.width,
+                  height: dragGhost.height,
+                }}
+              >
+                <div className="h-full w-full flex items-center gap-2.5 p-2">
+                  <GripVertical className="w-3.5 h-3.5 text-blue-500" />
+                  <div className="w-8 h-8 rounded-md border border-slate-200 bg-slate-100" />
+                  <div className="min-w-0">
+                    <span className="block text-xs font-bold truncate text-slate-900">
+                      {layers.find((layer) => layer.id === activeDragLayerId)?.name}
+                    </span>
+                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
+                      Dragging
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
