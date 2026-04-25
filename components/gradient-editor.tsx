@@ -16,10 +16,7 @@ import {
   Eye,
   EyeOff,
   Settings2,
-  Sparkles,
-  LayoutGrid
 } from 'lucide-react';
-import { GRADIENT_TEMPLATES, GradientTemplate } from '@/lib/templates';
 import {
   Tooltip,
   TooltipContent,
@@ -34,20 +31,11 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from '@/components/ui/dialog';
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { generateGradientCSSString } from '@/lib/gradient-utils';
 
 const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
   const next = [...items];
@@ -62,7 +50,6 @@ export function GradientEditor() {
   ]);
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
   const [activeDragLayerId, setActiveDragLayerId] = useState<string | null>(null);
   const [overLayerId, setOverLayerId] = useState<string | null>(null);
   const [pointerY, setPointerY] = useState<number | null>(null);
@@ -211,112 +198,25 @@ export function GradientEditor() {
     setIsSettingsOpen(true);
   };
 
-  const applyTemplate = (template: GradientTemplate) => {
-    const newLayers: Layer[] = template.layers.map((l, i) => {
-      const layerId = `layer-${Date.now()}-${i}`;
-      return {
-        ...l,
-        id: layerId,
-        gradient: l.gradient ? {
-          ...l.gradient,
-          stops: l.gradient.stops.map((s, si) => ({
-            ...s,
-            id: `stop-${layerId}-${si}`
-          }))
-        } : undefined,
-        x: l.x ?? 0,
-        y: l.y ?? 0,
-        width: l.width ?? 100,
-        height: l.height ?? 100,
-        rotation: l.rotation ?? 0,
-        preset: l.preset ?? 'default',
-      } as Layer;
-    });
-    setLayers(newLayers);
-    setActiveLayerId(newLayers[0].id);
-    setIsTemplatesOpen(false);
-  };
-
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6 overflow-hidden">
+    <div className="flex flex-col lg:flex-row gap-4 h-screen bg-[#e5e5e5] p-4 overflow-hidden">
       {/* Left Panel - Layers & Export */}
       <div className="w-full lg:w-96 flex flex-col gap-4 overflow-hidden">
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 flex flex-col overflow-hidden">
+        <div className="bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-4 flex flex-col overflow-hidden">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-slate-900">Gradient Gen</h1>
+            <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Gradient Gen</h1>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={resetLayers}
-                className="gap-2 h-8 px-2"
-                title="Reset to default layers"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                Reset
-              </Button>
-            </div>
-          </div>
-
-          {/* Templates Section */}
-          <div className="mb-6">
-            <Dialog open={isTemplatesOpen} onOpenChange={setIsTemplatesOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-between gap-2 border-slate-200 hover:border-blue-200 hover:bg-blue-50/50 group h-11 px-4 text-sm font-semibold"
+                  className="gap-2 h-8 px-2 border-black/30 bg-white hover:bg-neutral-100"
+                  title="Reset to default layers"
                 >
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
-                    <span className="text-slate-700">Explore Templates</span>
-                  </div>
-                  <LayoutGrid className="w-4 h-4 text-slate-400" />
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Reset
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-2xl">
-                <DialogHeader className="mb-4">
-                  <DialogTitle className="text-xl font-bold flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-500" />
-                    Gradient Presets
-                  </DialogTitle>
-                  <DialogDescription>
-                    Choose a professionally crafted gradient to start your composition. 
-                    You can customize all layers after applying.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-4">
-                  {GRADIENT_TEMPLATES.map((template) => (
-                    <div key={template.id} className="group relative">
-                      <button
-                        onClick={() => applyTemplate(template)}
-                        className="w-full aspect-square rounded-xl border-2 border-slate-100 overflow-hidden hover:border-blue-500 transition-all hover:shadow-xl relative bg-slate-50"
-                      >
-                        <div className="absolute inset-0 pointer-events-none">
-                          {template.layers.slice().reverse().map((layer, idx) => (
-                            <div
-                              key={idx}
-                              className="absolute inset-0"
-                              style={{
-                                background: layer.type === 'gradient' && layer.gradient
-                                  ? generateGradientCSSString(layer.gradient)
-                                  : layer.color,
-                                opacity: layer.opacity,
-                                mixBlendMode: layer.blendMode as any,
-                                filter: layer.blurEnabled ? `blur(${layer.blurAmount / 4}px)` : 'none'
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
-                      </button>
-                      <p className="mt-2 text-[11px] font-bold text-slate-600 uppercase tracking-tighter text-center">
-                        {template.name}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
+            </div>
           </div>
 
           {/* Layer List */}
@@ -368,10 +268,10 @@ export function GradientEditor() {
                   }}
                   onClick={() => setActiveLayerId(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
-                    ? 'bg-blue-50 border border-blue-200 ring-1 ring-blue-500/10'
-                    : 'bg-white border border-slate-100 hover:border-slate-300 hover:shadow-sm'
+                    ? 'bg-[#dbeafe] border border-[#93c5fd]'
+                    : 'bg-white border border-neutral-300 hover:border-neutral-400'
                     } ${activeDragLayerId === layer.id ? 'opacity-20 scale-[0.99]' : ''
-                    } ${overLayerId === layer.id && activeDragLayerId !== layer.id ? 'ring-2 ring-blue-300 border-blue-300 bg-blue-50/60' : ''
+                    } ${overLayerId === layer.id && activeDragLayerId !== layer.id ? 'ring-2 ring-[#93c5fd] border-[#93c5fd] bg-[#dbeafe]' : ''
                     }`}
                 >
                   <div
@@ -458,7 +358,7 @@ export function GradientEditor() {
             </div>
             {activeDragLayerId && dragGhost && pointerY !== null && (
               <div
-                className="fixed z-50 pointer-events-none rounded-lg border border-blue-300 bg-white/95 shadow-2xl backdrop-blur-sm transition-transform duration-75"
+                className="fixed z-50 pointer-events-none rounded-md border border-[#93c5fd] bg-white/95 shadow-lg transition-transform duration-75"
                 style={{
                   left: dragGhost.left,
                   top: pointerY - dragGhost.offsetY,
@@ -483,14 +383,14 @@ export function GradientEditor() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4 mt-auto">
+        <div className="bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-4 mt-auto">
           <h2 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest">Export Options</h2>
           <CSSExport layers={layers} />
         </div>
       </div>
 
       {/* Right Panel - Preview */}
-      <div className="flex-1 bg-white rounded-lg border border-slate-200 shadow-sm p-6 overflow-hidden flex flex-col">
+      <div className="flex-1 bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-6 overflow-hidden flex flex-col">
         <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
         <GradientPreview
           layers={layers}
