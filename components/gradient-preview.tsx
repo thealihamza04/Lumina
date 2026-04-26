@@ -171,7 +171,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
         </defs>
       </svg>
 
-      <div ref={previewRef} className="flex-1 rounded-xl border border-slate-200 shadow-inner overflow-hidden relative bg-white touch-none">
+      <div ref={previewRef} className="flex-1 rounded-none border border-slate-200 shadow-inner overflow-hidden relative bg-white touch-none">
         {/* Checkerboard background for transparency preview */}
         <div
           className="absolute inset-0 opacity-[0.03] pointer-events-none"

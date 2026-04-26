@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Layer, generateGradientCSSString } from '@/lib/gradient-utils';
 import { Button } from '@/components/ui/button';
-import { Copy, Download, Check, Code2, ExternalLink } from 'lucide-react';
+import { Copy, Download, Check, Code2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -85,10 +85,13 @@ export function CSSExport({ layers }: CSSExportProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="w-full gap-2 bg-slate-900 hover:bg-slate-800 text-white font-bold py-6 rounded-xl shadow-sm transition-all active:scale-[0.98]">
-          <Code2 className="w-5 h-5 text-blue-400" />
-          Export Composition
-          <ExternalLink className="w-4 h-4 opacity-30" />
+        <Button
+          size="icon"
+          className="h-9 w-9 bg-slate-900 hover:bg-slate-800 text-white rounded-md shadow-sm transition-all active:scale-[0.98]"
+          aria-label="Export composition"
+          title="Export composition"
+        >
+          <Code2 className="w-4 h-4 text-blue-400" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col p-8">
@@ -113,7 +116,7 @@ export function CSSExport({ layers }: CSSExportProps) {
               <div className="w-2 h-2 rounded-full bg-green-500/30" />
             </div>
           </div>
-          <div className="p-4 overflow-y-auto font-mono text-sm leading-relaxed text-blue-100/90 whitespace-pre scrollbar-thin scrollbar-thumb-slate-800">
+          <div className="p-4 overflow-y-auto font-mono text-sm leading-relaxed text-blue-100/90 whitespace-pre scrollbar-thin scrollbar-thumb-slate-800 [&::-webkit-scrollbar]:w-1.5">
             {generateFullCSS()}
           </div>
         </div>
