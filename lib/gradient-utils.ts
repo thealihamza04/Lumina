@@ -184,14 +184,14 @@ export const createPseudoMeshLayers = (options: MeshGeneratorOptions): Layer[] =
   };
 
   return Array.from({ length: blobCount }, (_, index) => {
-    const baseRadius = gradientMode === 'simple' ? 26 : gradientMode === 'mesh-grid' ? 20 : 20 + (spread * 0.45);
-    const radius = clamp(baseRadius + randomFrom(-8, 8), 16, 72);
+    const baseRadius = gradientMode === 'simple' ? 18 : gradientMode === 'mesh-grid' ? 14 : 22;
+    const radius = clamp(baseRadius + randomFrom(-6, 10), 10, 36);
     const rawX = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
     const rawY = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
     const warped = applyWarp(rawX, rawY, index);
     const x = clamp(warped.x, 0, 100);
     const y = clamp(warped.y, 0, 100);
-    const falloff = clamp(gradientMode === 'sharp-bezier' ? softness * 0.6 : softness, 20, 100);
+    const falloff = clamp((gradientMode === 'sharp-bezier' ? softness * 0.55 : softness * 0.7), 18, 72);
     const color = getHarmonizedColor(baseHue, index, blobCount);
     const alphaBase = gradientMode === 'sharp-bezier' ? 0.62 : gradientMode === 'simple' ? 0.4 : 0.5;
     const alpha = clamp(alphaBase + randomFrom(-0.1, 0.15), 0.2, 0.9);
@@ -205,12 +205,13 @@ export const createPseudoMeshLayers = (options: MeshGeneratorOptions): Layer[] =
         angle: 0,
         stops: [
           { id: `${index}-start`, color, position: 0, opacity: alpha },
-          { id: `${index}-end`, color, position: falloff, opacity: 0 },
+          { id: `${index}-mid`, color, position: radius, opacity: alpha * 0.42 },
+          { id: `${index}-end`, color, position: Math.min(100, radius + falloff), opacity: 0 },
         ],
         radialShape: 'circle',
         radialSize: 'farthest-corner',
-        radialX: 50,
-        radialY: 50,
+        radialX: x,
+        radialY: y,
         conicAngle: 0,
         conicX: 50,
         conicY: 50,
@@ -218,14 +219,14 @@ export const createPseudoMeshLayers = (options: MeshGeneratorOptions): Layer[] =
       opacity: 1,
       visible: true,
       blurEnabled: true,
-      blurAmount: Math.round((gradientMode === 'soft-bezier' ? softness * 0.9 : softness * 0.65)),
-      noiseEnabled: noiseIntensity > 2,
+      blurAmount: Math.round((gradientMode === 'soft-bezier' ? softness * 0.75 : softness * 0.55)),
+      noiseEnabled: noiseIntensity > 8,
       noiseAmount: noiseIntensity,
-      blendMode: gradientMode === 'sharp-bezier' ? 'overlay' : 'screen',
-      x: clamp(x - radius / 2, 0, 100),
-      y: clamp(y - radius / 2, 0, 100),
-      width: radius,
-      height: radius,
+      blendMode: gradientMode === 'sharp-bezier' ? 'overlay' : 'normal',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100,
       rotation: 0,
       preset: 'mesh',
       meshPoint: {

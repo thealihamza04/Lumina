@@ -14,7 +14,7 @@ interface GradientPreviewProps {
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se';
 
 type InteractionState = {
-  mode: 'move' | 'resize';
+  mode: 'move' | 'resize' | 'mesh-point';
   layerId: string;
   handle?: ResizeHandle;
   startX: number;
@@ -61,6 +61,19 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
       if (interaction.mode === 'move') {
         nextX = clamp(start.x + deltaXPercent, 0, 100 - start.width);
         nextY = clamp(start.y + deltaYPercent, 0, 100 - start.height);
+      }
+      if (interaction.mode === 'mesh-point' && interaction.startLayer.gradient) {
+        const radialX = clamp((interaction.startLayer.gradient.radialX ?? 50) + deltaXPercent, 0, 100);
+        const radialY = clamp((interaction.startLayer.gradient.radialY ?? 50) + deltaYPercent, 0, 100);
+        onUpdateLayer({
+          ...interaction.startLayer,
+          gradient: {
+            ...interaction.startLayer.gradient,
+            radialX,
+            radialY,
+          },
+        });
+        return;
       }
 
       if (interaction.mode === 'resize' && interaction.handle) {
@@ -141,7 +154,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
     event.stopPropagation();
     onSelectLayer?.(layer.id);
     setInteraction({
-      mode: 'move',
+      mode: 'mesh-point',
       layerId: layer.id,
       startX: event.clientX,
       startY: event.clientY,
@@ -149,7 +162,7 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
     });
   };
 
-  const selectedLayerOverlay = layers.find((layer) => layer.id === activeLayerId && layer.visible);
+  const selectedLayerOverlay = layers.find((layer) => layer.id === activeLayerId && layer.visible && !(meshMode && layer.preset === 'mesh'));
 
   return (
     <div className="flex flex-col gap-6 h-full min-h-0">
@@ -257,8 +270,8 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
           );
         })}
         {meshMode && layers.filter((layer) => layer.preset === 'mesh' && layer.visible).map((layer) => {
-          const x = (layer.x ?? DEFAULT_TRANSFORM.x) + ((layer.width ?? DEFAULT_TRANSFORM.width) / 2);
-          const y = (layer.y ?? DEFAULT_TRANSFORM.y) + ((layer.height ?? DEFAULT_TRANSFORM.height) / 2);
+          const x = layer.gradient?.radialX ?? 50;
+          const y = layer.gradient?.radialY ?? 50;
           const isActive = activeLayerId === layer.id;
           return (
             <button

@@ -69,7 +69,7 @@ export function GradientEditor() {
   const [warpShape, setWarpShape] = useState<'simplex-noise' | 'circular' | 'value-noise' | 'worley-noise' | 'fbm-noise' | 'voronoi-noise' | 'domain-warping' | 'waves' | 'smooth-noise' | 'oval' | 'rows' | 'columns' | 'flat' | 'gravity'>('simplex-noise');
   const [warpAmount, setWarpAmount] = useState(40);
   const [warpSize, setWarpSize] = useState(52);
-  const [noiseAmount, setNoiseAmount] = useState(12);
+  const [noiseAmount, setNoiseAmount] = useState(0);
 
   const selectedLayer = layers.find(l => l.id === activeLayerId);
 
@@ -144,24 +144,18 @@ export function GradientEditor() {
       if (layer.id !== layerId || layer.preset !== 'mesh' || !layer.meshPoint || !layer.gradient) return layer;
 
       const nextMeshPoint = { ...layer.meshPoint, ...updates };
-      const radius = nextMeshPoint.radius;
-      const width = radius;
-      const height = radius;
-      const currentCenterX = (layer.x ?? 0) + ((layer.width ?? width) / 2);
-      const currentCenterY = (layer.y ?? 0) + ((layer.height ?? height) / 2);
+      const radius = Math.max(6, Math.min(50, nextMeshPoint.radius));
+      const falloffEnd = Math.min(100, radius + nextMeshPoint.falloff);
 
       return {
         ...layer,
-        width,
-        height,
-        x: Math.max(0, Math.min(100 - width, currentCenterX - (width / 2))),
-        y: Math.max(0, Math.min(100 - height, currentCenterY - (height / 2))),
-        blurAmount: Math.round(nextMeshPoint.falloff * 0.7),
+        blurAmount: Math.round(nextMeshPoint.falloff * 0.55),
         gradient: {
           ...layer.gradient,
           stops: layer.gradient.stops.map((stop, index) => {
             if (index === 0) return { ...stop, opacity: nextMeshPoint.alpha };
-            if (index === layer.gradient!.stops.length - 1) return { ...stop, position: nextMeshPoint.falloff, opacity: 0 };
+            if (index === 1) return { ...stop, position: radius, opacity: nextMeshPoint.alpha * 0.42 };
+            if (index === layer.gradient!.stops.length - 1) return { ...stop, position: falloffEnd, opacity: 0 };
             return stop;
           }),
         },
