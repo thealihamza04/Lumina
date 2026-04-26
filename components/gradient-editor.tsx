@@ -391,7 +391,6 @@ export function GradientEditor() {
 
       {/* Right Panel - Preview */}
       <div className="flex-1 bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-6 overflow-hidden flex flex-col">
-        <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
         <GradientPreview
           layers={layers}
           activeLayerId={activeLayerId}
