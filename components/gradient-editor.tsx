@@ -259,7 +259,7 @@ export function GradientEditor() {
                 </DropdownMenu>
               </div>
             </div>
-            <div className="space-y-2 overflow-y-auto pr-2 pb-4 h-full">
+            <div className="space-y-2 overflow-y-auto pr-1 pb-4 h-full [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
               {layers.map((layer) => (
                 <div
                   key={layer.id}
@@ -312,9 +312,11 @@ export function GradientEditor() {
                     <span className={`block text-xs font-bold truncate ${layer.visible ? 'text-slate-900' : 'text-slate-400'}`}>
                       {layer.name}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
-                      {(layer.preset ?? layer.type)} • {layer.blendMode}
-                    </span>
+                    {((layer.preset ?? layer.type) !== 'default' || layer.blendMode !== 'normal') && (
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
+                        {(layer.preset ?? layer.type)} • {layer.blendMode}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -383,8 +385,7 @@ export function GradientEditor() {
           </div>
         </div>
 
-        <div className="bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-4 mt-auto">
-          <h2 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest">Export Options</h2>
+        <div className="bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-2 mt-auto flex justify-end">
           <CSSExport layers={layers} />
         </div>
       </div>
@@ -400,7 +401,7 @@ export function GradientEditor() {
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-sm p-0 flex flex-col">
+        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-sm p-0 flex flex-col [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 pb-10 space-y-6">
               <SheetHeader className="mb-2 p-0 space-y-1">
