@@ -80,10 +80,14 @@ export function GradientEditor() {
     }
     if (preset === 'noise') {
       newLayer.name = `Noise ${newLayer.name}`;
+      newLayer.type = 'color';
+      newLayer.gradient = undefined;
+      newLayer.color = 'transparent';
+      newLayer.blurEnabled = false;
       newLayer.noiseEnabled = true;
       newLayer.noiseAmount = 55;
-      newLayer.opacity = 0.5;
-      newLayer.blendMode = 'overlay';
+      newLayer.opacity = 1;
+      newLayer.blendMode = 'normal';
       newLayer.preset = 'noise';
     }
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
@@ -207,9 +211,15 @@ export function GradientEditor() {
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'n') {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'l') {
         event.preventDefault();
         addLayer('default');
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
+        event.preventDefault();
+        addLayer('blur');
         return;
       }
 
@@ -420,7 +430,7 @@ export function GradientEditor() {
           </div>
         </div>
 
-        <div className="bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-2 mt-auto flex justify-end">
+        <div className="mt-auto flex justify-end">
           <CSSExport layers={layers} />
         </div>
       </div>
