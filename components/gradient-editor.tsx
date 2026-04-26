@@ -430,7 +430,7 @@ export function GradientEditor() {
           </div>
         </div>
 
-        <div className="absolute bottom-0 right-0 flex justify-end">
+        <div className="mt-auto flex justify-end">
           <CSSExport layers={layers} />
         </div>
       </div>
