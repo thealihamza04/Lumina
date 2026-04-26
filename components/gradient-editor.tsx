@@ -61,7 +61,7 @@ export function GradientEditor() {
   } | null>(null);
   const layerRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const selectedLayer = layers.find(l => l.id === activeLayerId) || layers[0];
+  const selectedLayer = layers.find(l => l.id === activeLayerId);
 
   const resetLayers = () => {
     const defaultLayer = getDefaultLayer('1');
@@ -80,10 +80,14 @@ export function GradientEditor() {
     }
     if (preset === 'noise') {
       newLayer.name = `Noise ${newLayer.name}`;
+      newLayer.type = 'color';
+      newLayer.gradient = undefined;
+      newLayer.color = 'transparent';
+      newLayer.blurEnabled = false;
       newLayer.noiseEnabled = true;
       newLayer.noiseAmount = 55;
-      newLayer.opacity = 0.5;
-      newLayer.blendMode = 'overlay';
+      newLayer.opacity = 1;
+      newLayer.blendMode = 'normal';
       newLayer.preset = 'noise';
     }
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
@@ -198,6 +202,46 @@ export function GradientEditor() {
     setIsSettingsOpen(true);
   };
 
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null) => {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      const tagName = el.tagName.toLowerCase();
+      return el.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'l') {
+        event.preventDefault();
+        addLayer('default');
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b') {
+        event.preventDefault();
+        addLayer('blur');
+        return;
+      }
+
+      if (isTypingTarget(event.target)) return;
+
+      if (event.key === 'Delete' && activeLayerId) {
+        event.preventDefault();
+        deleteLayer(activeLayerId);
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setActiveLayerId('');
+        setIsSettingsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeLayerId, layers]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-screen bg-transparent p-4 overflow-hidden">
       {/* Left Panel - Layers & Export */}
@@ -259,7 +303,7 @@ export function GradientEditor() {
                 </DropdownMenu>
               </div>
             </div>
-            <div className="space-y-2 overflow-y-auto pr-2 pb-4 h-full">
+            <div className="space-y-2 overflow-y-auto pr-1 pb-4 h-full [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
               {layers.map((layer) => (
                 <div
                   key={layer.id}
@@ -267,6 +311,7 @@ export function GradientEditor() {
                     layerRowRefs.current[layer.id] = node;
                   }}
                   onClick={() => setActiveLayerId(layer.id)}
+                  onDoubleClick={() => openSettings(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-[#dbeafe] border border-[#93c5fd]'
                     : 'bg-white border border-neutral-300 hover:border-neutral-400'
@@ -312,9 +357,11 @@ export function GradientEditor() {
                     <span className={`block text-xs font-bold truncate ${layer.visible ? 'text-slate-900' : 'text-slate-400'}`}>
                       {layer.name}
                     </span>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
-                      {(layer.preset ?? layer.type)} • {layer.blendMode}
-                    </span>
+                    {((layer.preset ?? layer.type) !== 'default' || layer.blendMode !== 'normal') && (
+                      <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tight leading-none">
+                        {(layer.preset ?? layer.type)} • {layer.blendMode}
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -383,15 +430,13 @@ export function GradientEditor() {
           </div>
         </div>
 
-        <div className="bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-4 mt-auto">
-          <h2 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-widest">Export Options</h2>
+        <div className="mt-auto flex justify-end">
           <CSSExport layers={layers} />
         </div>
       </div>
 
       {/* Right Panel - Preview */}
       <div className="flex-1 bg-[#f8f8f8] rounded-md border border-black/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8)] p-6 overflow-hidden flex flex-col">
-        <h2 className="text-xs font-bold text-slate-400 uppercase mb-4 tracking-widest">Global Composition Preview</h2>
         <GradientPreview
           layers={layers}
           activeLayerId={activeLayerId}
@@ -401,7 +446,7 @@ export function GradientEditor() {
       </div>
 
       <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-sm p-0 flex flex-col">
+        <SheetContent className="sm:max-w-md overflow-y-auto border-l border-slate-200 shadow-sm p-0 flex flex-col [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb]:rounded-full">
           <div className="flex-1 overflow-y-auto">
             <div className="p-6 pb-10 space-y-6">
               <SheetHeader className="mb-2 p-0 space-y-1">
