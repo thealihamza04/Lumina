@@ -65,6 +65,11 @@ export function GradientEditor() {
   const [blobCount, setBlobCount] = useState(6);
   const [meshSpread, setMeshSpread] = useState(78);
   const [meshSoftness, setMeshSoftness] = useState(72);
+  const [gradientMode, setGradientMode] = useState<'sharp-bezier' | 'soft-bezier' | 'mesh-static' | 'mesh-grid' | 'simple'>('sharp-bezier');
+  const [warpShape, setWarpShape] = useState<'simplex-noise' | 'circular' | 'value-noise' | 'worley-noise' | 'fbm-noise' | 'voronoi-noise' | 'domain-warping' | 'waves' | 'smooth-noise' | 'oval' | 'rows' | 'columns' | 'flat' | 'gravity'>('simplex-noise');
+  const [warpAmount, setWarpAmount] = useState(40);
+  const [warpSize, setWarpSize] = useState(52);
+  const [noiseAmount, setNoiseAmount] = useState(12);
 
   const selectedLayer = layers.find(l => l.id === activeLayerId);
 
@@ -105,6 +110,11 @@ export function GradientEditor() {
       blobCount,
       spread: meshSpread,
       softness: meshSoftness,
+      gradientMode,
+      warpShape,
+      warpAmount,
+      warpSize,
+      noiseIntensity: noiseAmount,
     });
     setLayers(meshLayers);
     if (meshLayers[0]) {
@@ -323,6 +333,41 @@ export function GradientEditor() {
                 {meshMode ? 'On' : 'Off'}
               </button>
             </div>
+            <div className="grid grid-cols-[90px_1fr] items-center gap-2">
+              <label className="text-xs font-semibold text-slate-700">Gradient</label>
+              <select
+                value={gradientMode}
+                onChange={(e) => setGradientMode(e.target.value as typeof gradientMode)}
+                className="px-2 py-1.5 text-sm border border-slate-200 rounded-md bg-white"
+              >
+                <option value="sharp-bezier">Sharp Bézier</option>
+                <option value="soft-bezier">Soft Bézier</option>
+                <option value="mesh-static">Mesh Static</option>
+                <option value="mesh-grid">Mesh Grid</option>
+                <option value="simple">Simple</option>
+              </select>
+              <label className="text-xs font-semibold text-slate-700">Warp Shape</label>
+              <select
+                value={warpShape}
+                onChange={(e) => setWarpShape(e.target.value as typeof warpShape)}
+                className="px-2 py-1.5 text-sm border border-slate-200 rounded-md bg-white"
+              >
+                <option value="simplex-noise">Simplex Noise</option>
+                <option value="circular">Circular</option>
+                <option value="value-noise">Value Noise</option>
+                <option value="worley-noise">Worley Noise</option>
+                <option value="fbm-noise">FBM Noise</option>
+                <option value="voronoi-noise">Voronoi Noise</option>
+                <option value="domain-warping">Domain Warping</option>
+                <option value="waves">Waves</option>
+                <option value="smooth-noise">Smooth Noise</option>
+                <option value="oval">Oval</option>
+                <option value="rows">Rows</option>
+                <option value="columns">Columns</option>
+                <option value="flat">Flat</option>
+                <option value="gravity">Gravity</option>
+              </select>
+            </div>
             <div className="grid grid-cols-3 gap-2">
               <div>
                 <label className="text-[10px] font-semibold text-slate-500">Blob Count: {blobCount}</label>
@@ -340,6 +385,20 @@ export function GradientEditor() {
             <Button size="sm" className="w-full h-8 text-xs font-bold" onClick={generateMeshPreset}>
               Generate Pseudo Mesh
             </Button>
+            <div className="space-y-2">
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Warp: {warpAmount}</label>
+                <Slider min={0} max={100} step={1} value={[warpAmount]} onValueChange={([v]: number[]) => setWarpAmount(v)} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Warp Size: {warpSize}</label>
+                <Slider min={1} max={100} step={1} value={[warpSize]} onValueChange={([v]: number[]) => setWarpSize(v)} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Noise: {noiseAmount}</label>
+                <Slider min={0} max={100} step={1} value={[noiseAmount]} onValueChange={([v]: number[]) => setNoiseAmount(v)} />
+              </div>
+            </div>
             {meshMode && selectedLayer?.preset === 'mesh' && selectedLayer.meshPoint && (
               <div className="pt-2 border-t border-slate-100 space-y-2">
                 <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Selected Mesh Point</p>

@@ -128,6 +128,11 @@ export interface MeshGeneratorOptions {
   blobCount: number;
   spread: number;
   softness: number;
+  gradientMode?: 'sharp-bezier' | 'soft-bezier' | 'mesh-static' | 'mesh-grid' | 'simple';
+  warpShape?: 'simplex-noise' | 'circular' | 'value-noise' | 'worley-noise' | 'fbm-noise' | 'voronoi-noise' | 'domain-warping' | 'waves' | 'smooth-noise' | 'oval' | 'rows' | 'columns' | 'flat' | 'gravity';
+  warpAmount?: number;
+  warpSize?: number;
+  noiseIntensity?: number;
 }
 
 const randomFrom = (min: number, max: number) => Math.random() * (max - min) + min;
@@ -144,17 +149,52 @@ export const createPseudoMeshLayers = (options: MeshGeneratorOptions): Layer[] =
   const blobCount = clamp(Math.round(options.blobCount), 4, 8);
   const spread = clamp(options.spread, 20, 100);
   const softness = clamp(options.softness, 20, 100);
+  const gradientMode = options.gradientMode ?? 'soft-bezier';
+  const warpShape = options.warpShape ?? 'simplex-noise';
+  const warpAmount = clamp(options.warpAmount ?? 0, 0, 100);
+  const warpSize = clamp(options.warpSize ?? 50, 1, 100);
+  const noiseIntensity = clamp(options.noiseIntensity ?? 0, 0, 100);
   const groupId = `mesh-${Date.now()}`;
   const baseHue = randomFrom(0, 360);
   const centerPull = (100 - spread) / 2;
 
+  const applyWarp = (x: number, y: number, i: number) => {
+    const t = (i + 1) / blobCount;
+    const amp = (warpAmount / 100) * (warpSize / 16);
+    switch (warpShape) {
+      case 'circular': {
+        const angle = t * Math.PI * 2;
+        return { x: x + Math.cos(angle) * amp * 8, y: y + Math.sin(angle) * amp * 8 };
+      }
+      case 'rows':
+        return { x, y: y + (Math.sin((x / 100) * Math.PI * 2) * amp * 6) };
+      case 'columns':
+        return { x: x + (Math.sin((y / 100) * Math.PI * 2) * amp * 6), y };
+      case 'waves':
+        return { x: x + Math.sin((y / 100) * Math.PI * 3) * amp * 10, y: y + Math.cos((x / 100) * Math.PI * 3) * amp * 10 };
+      case 'oval':
+        return { x: x + Math.sin(t * Math.PI * 2) * amp * 10, y: y + Math.cos(t * Math.PI * 2) * amp * 4 };
+      case 'gravity':
+        return { x, y: y + (t - 0.5) * amp * 14 };
+      case 'flat':
+        return { x, y: 50 + (y - 50) * (1 - (warpAmount / 120)) };
+      default:
+        return { x: x + randomFrom(-amp * 8, amp * 8), y: y + randomFrom(-amp * 8, amp * 8) };
+    }
+  };
+
   return Array.from({ length: blobCount }, (_, index) => {
-    const radius = clamp(20 + (spread * 0.45) + randomFrom(-8, 8), 18, 70);
-    const x = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
-    const y = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
-    const falloff = clamp(softness, 20, 100);
+    const baseRadius = gradientMode === 'simple' ? 26 : gradientMode === 'mesh-grid' ? 20 : 20 + (spread * 0.45);
+    const radius = clamp(baseRadius + randomFrom(-8, 8), 16, 72);
+    const rawX = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
+    const rawY = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
+    const warped = applyWarp(rawX, rawY, index);
+    const x = clamp(warped.x, 0, 100);
+    const y = clamp(warped.y, 0, 100);
+    const falloff = clamp(gradientMode === 'sharp-bezier' ? softness * 0.6 : softness, 20, 100);
     const color = getHarmonizedColor(baseHue, index, blobCount);
-    const alpha = clamp(0.45 + randomFrom(-0.1, 0.18), 0.25, 0.85);
+    const alphaBase = gradientMode === 'sharp-bezier' ? 0.62 : gradientMode === 'simple' ? 0.4 : 0.5;
+    const alpha = clamp(alphaBase + randomFrom(-0.1, 0.15), 0.2, 0.9);
 
     return {
       id: `${Date.now()}-${index}`,
@@ -178,10 +218,10 @@ export const createPseudoMeshLayers = (options: MeshGeneratorOptions): Layer[] =
       opacity: 1,
       visible: true,
       blurEnabled: true,
-      blurAmount: Math.round(softness * 0.7),
-      noiseEnabled: false,
-      noiseAmount: 0,
-      blendMode: 'screen',
+      blurAmount: Math.round((gradientMode === 'soft-bezier' ? softness * 0.9 : softness * 0.65)),
+      noiseEnabled: noiseIntensity > 2,
+      noiseAmount: noiseIntensity,
+      blendMode: gradientMode === 'sharp-bezier' ? 'overlay' : 'screen',
       x: clamp(x - radius / 2, 0, 100),
       y: clamp(y - radius / 2, 0, 100),
       width: radius,
