@@ -61,7 +61,7 @@ export function GradientEditor() {
   } | null>(null);
   const layerRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const selectedLayer = layers.find(l => l.id === activeLayerId) || layers[0];
+  const selectedLayer = layers.find(l => l.id === activeLayerId);
 
   const resetLayers = () => {
     const defaultLayer = getDefaultLayer('1');
@@ -198,6 +198,40 @@ export function GradientEditor() {
     setIsSettingsOpen(true);
   };
 
+  useEffect(() => {
+    const isTypingTarget = (target: EventTarget | null) => {
+      const el = target as HTMLElement | null;
+      if (!el) return false;
+      const tagName = el.tagName.toLowerCase();
+      return el.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'n') {
+        event.preventDefault();
+        addLayer('default');
+        return;
+      }
+
+      if (isTypingTarget(event.target)) return;
+
+      if (event.key === 'Delete' && activeLayerId) {
+        event.preventDefault();
+        deleteLayer(activeLayerId);
+        return;
+      }
+
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setActiveLayerId('');
+        setIsSettingsOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [activeLayerId, layers]);
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-screen bg-transparent p-4 overflow-hidden">
       {/* Left Panel - Layers & Export */}
@@ -267,6 +301,7 @@ export function GradientEditor() {
                     layerRowRefs.current[layer.id] = node;
                   }}
                   onClick={() => setActiveLayerId(layer.id)}
+                  onDoubleClick={() => openSettings(layer.id)}
                   className={`group relative flex items-center gap-2.5 p-2 rounded-lg cursor-pointer transition-all duration-200 ${activeLayerId === layer.id
                     ? 'bg-[#dbeafe] border border-[#93c5fd]'
                     : 'bg-white border border-neutral-300 hover:border-neutral-400'
