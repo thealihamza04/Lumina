@@ -48,7 +48,13 @@ export interface Layer {
   width?: number; // 0-100
   height?: number; // 0-100
   rotation?: number; // degrees
-  preset?: 'default' | 'blur' | 'noise';
+  preset?: 'default' | 'blur' | 'noise' | 'mesh';
+  meshPoint?: {
+    alpha: number; // 0-1
+    radius: number; // 10-80
+    falloff: number; // 20-100
+    groupId?: string;
+  };
 }
 
 export const generateGradientCSSString = (state: GradientState): string => {
@@ -115,3 +121,79 @@ export const getDefaultLayer = (id: string = Date.now().toString()): Layer => ({
   rotation: 0,
   preset: 'default',
 });
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+export interface MeshGeneratorOptions {
+  blobCount: number;
+  spread: number;
+  softness: number;
+}
+
+const randomFrom = (min: number, max: number) => Math.random() * (max - min) + min;
+
+const getHarmonizedColor = (baseHue: number, index: number, total: number) => {
+  const hueShift = (360 / Math.max(total, 1)) * index;
+  const hue = (baseHue + hueShift + randomFrom(-10, 10) + 360) % 360;
+  const sat = clamp(70 + randomFrom(-12, 12), 45, 90);
+  const light = clamp(60 + randomFrom(-10, 10), 42, 76);
+  return colord({ h: hue, s: sat, l: light }).toHex();
+};
+
+export const createPseudoMeshLayers = (options: MeshGeneratorOptions): Layer[] => {
+  const blobCount = clamp(Math.round(options.blobCount), 4, 8);
+  const spread = clamp(options.spread, 20, 100);
+  const softness = clamp(options.softness, 20, 100);
+  const groupId = `mesh-${Date.now()}`;
+  const baseHue = randomFrom(0, 360);
+  const centerPull = (100 - spread) / 2;
+
+  return Array.from({ length: blobCount }, (_, index) => {
+    const radius = clamp(20 + (spread * 0.45) + randomFrom(-8, 8), 18, 70);
+    const x = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
+    const y = clamp(randomFrom(centerPull, 100 - centerPull), 0, 100);
+    const falloff = clamp(softness, 20, 100);
+    const color = getHarmonizedColor(baseHue, index, blobCount);
+    const alpha = clamp(0.45 + randomFrom(-0.1, 0.18), 0.25, 0.85);
+
+    return {
+      id: `${Date.now()}-${index}`,
+      name: `Mesh Point ${index + 1}`,
+      type: 'gradient',
+      gradient: {
+        type: 'radial',
+        angle: 0,
+        stops: [
+          { id: `${index}-start`, color, position: 0, opacity: alpha },
+          { id: `${index}-end`, color, position: falloff, opacity: 0 },
+        ],
+        radialShape: 'circle',
+        radialSize: 'farthest-corner',
+        radialX: 50,
+        radialY: 50,
+        conicAngle: 0,
+        conicX: 50,
+        conicY: 50,
+      },
+      opacity: 1,
+      visible: true,
+      blurEnabled: true,
+      blurAmount: Math.round(softness * 0.7),
+      noiseEnabled: false,
+      noiseAmount: 0,
+      blendMode: 'screen',
+      x: clamp(x - radius / 2, 0, 100),
+      y: clamp(y - radius / 2, 0, 100),
+      width: radius,
+      height: radius,
+      rotation: 0,
+      preset: 'mesh',
+      meshPoint: {
+        alpha,
+        radius,
+        falloff,
+        groupId,
+      },
+    };
+  });
+};

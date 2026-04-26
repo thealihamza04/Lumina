@@ -1,7 +1,7 @@
 'use client';
 
 import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Layer, getDefaultLayer } from '@/lib/gradient-utils';
+import { Layer, createPseudoMeshLayers, getDefaultLayer } from '@/lib/gradient-utils';
 import { ControlPanel } from './control-panel';
 import { GradientPreview } from './gradient-preview';
 import { CSSExport } from './css-export';
@@ -36,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Slider } from '@/components/ui/slider';
 
 const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
   const next = [...items];
@@ -60,6 +61,10 @@ export function GradientEditor() {
     offsetY: number;
   } | null>(null);
   const layerRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [meshMode, setMeshMode] = useState(false);
+  const [blobCount, setBlobCount] = useState(6);
+  const [meshSpread, setMeshSpread] = useState(78);
+  const [meshSoftness, setMeshSoftness] = useState(72);
 
   const selectedLayer = layers.find(l => l.id === activeLayerId);
 
@@ -95,6 +100,19 @@ export function GradientEditor() {
     setIsSettingsOpen(true);
   };
 
+  const generateMeshPreset = () => {
+    const meshLayers = createPseudoMeshLayers({
+      blobCount,
+      spread: meshSpread,
+      softness: meshSoftness,
+    });
+    setLayers(meshLayers);
+    if (meshLayers[0]) {
+      setActiveLayerId(meshLayers[0].id);
+    }
+    setMeshMode(true);
+  };
+
   const deleteLayer = (id: string) => {
     if (layers.length > 1) {
       setLayers((prevLayers) => {
@@ -109,6 +127,37 @@ export function GradientEditor() {
 
   const updateLayer = (updatedLayer: Layer) => {
     setLayers((prevLayers) => prevLayers.map(l => l.id === updatedLayer.id ? updatedLayer : l));
+  };
+
+  const updateMeshPoint = (layerId: string, updates: Partial<NonNullable<Layer['meshPoint']>>) => {
+    setLayers((prevLayers) => prevLayers.map((layer) => {
+      if (layer.id !== layerId || layer.preset !== 'mesh' || !layer.meshPoint || !layer.gradient) return layer;
+
+      const nextMeshPoint = { ...layer.meshPoint, ...updates };
+      const radius = nextMeshPoint.radius;
+      const width = radius;
+      const height = radius;
+      const currentCenterX = (layer.x ?? 0) + ((layer.width ?? width) / 2);
+      const currentCenterY = (layer.y ?? 0) + ((layer.height ?? height) / 2);
+
+      return {
+        ...layer,
+        width,
+        height,
+        x: Math.max(0, Math.min(100 - width, currentCenterX - (width / 2))),
+        y: Math.max(0, Math.min(100 - height, currentCenterY - (height / 2))),
+        blurAmount: Math.round(nextMeshPoint.falloff * 0.7),
+        gradient: {
+          ...layer.gradient,
+          stops: layer.gradient.stops.map((stop, index) => {
+            if (index === 0) return { ...stop, opacity: nextMeshPoint.alpha };
+            if (index === layer.gradient!.stops.length - 1) return { ...stop, position: nextMeshPoint.falloff, opacity: 0 };
+            return stop;
+          }),
+        },
+        meshPoint: nextMeshPoint,
+      };
+    }));
   };
 
   const toggleVisibility = (id: string) => {
@@ -261,6 +310,71 @@ export function GradientEditor() {
                   Reset
                 </Button>
             </div>
+          </div>
+
+          <div className="mb-4 rounded-lg border border-slate-200 bg-white p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Mesh Mode</h3>
+              <button
+                type="button"
+                onClick={() => setMeshMode((v) => !v)}
+                className={`text-[10px] px-2 py-1 rounded font-bold ${meshMode ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'}`}
+              >
+                {meshMode ? 'On' : 'Off'}
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Blob Count: {blobCount}</label>
+                <Slider min={4} max={8} step={1} value={[blobCount]} onValueChange={([v]: number[]) => setBlobCount(v)} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Spread: {meshSpread}</label>
+                <Slider min={20} max={100} step={1} value={[meshSpread]} onValueChange={([v]: number[]) => setMeshSpread(v)} />
+              </div>
+              <div>
+                <label className="text-[10px] font-semibold text-slate-500">Softness: {meshSoftness}</label>
+                <Slider min={20} max={100} step={1} value={[meshSoftness]} onValueChange={([v]: number[]) => setMeshSoftness(v)} />
+              </div>
+            </div>
+            <Button size="sm" className="w-full h-8 text-xs font-bold" onClick={generateMeshPreset}>
+              Generate Pseudo Mesh
+            </Button>
+            {meshMode && selectedLayer?.preset === 'mesh' && selectedLayer.meshPoint && (
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wide">Selected Mesh Point</p>
+                <div>
+                  <label className="text-[10px] text-slate-500">Radius: {Math.round(selectedLayer.meshPoint.radius)}</label>
+                  <Slider
+                    min={10}
+                    max={80}
+                    step={1}
+                    value={[selectedLayer.meshPoint.radius]}
+                    onValueChange={([v]: number[]) => updateMeshPoint(selectedLayer.id, { radius: v })}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500">Alpha: {selectedLayer.meshPoint.alpha.toFixed(2)}</label>
+                  <Slider
+                    min={0.15}
+                    max={1}
+                    step={0.01}
+                    value={[selectedLayer.meshPoint.alpha]}
+                    onValueChange={([v]: number[]) => updateMeshPoint(selectedLayer.id, { alpha: v })}
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-500">Falloff: {Math.round(selectedLayer.meshPoint.falloff)}%</label>
+                  <Slider
+                    min={20}
+                    max={100}
+                    step={1}
+                    value={[selectedLayer.meshPoint.falloff]}
+                    onValueChange={([v]: number[]) => updateMeshPoint(selectedLayer.id, { falloff: v })}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Layer List */}
@@ -442,6 +556,7 @@ export function GradientEditor() {
           activeLayerId={activeLayerId}
           onSelectLayer={setActiveLayerId}
           onUpdateLayer={updateLayer}
+          meshMode={meshMode}
         />
       </div>
 

@@ -8,6 +8,7 @@ interface GradientPreviewProps {
   activeLayerId?: string;
   onSelectLayer?: (id: string) => void;
   onUpdateLayer?: (layer: Layer) => void;
+  meshMode?: boolean;
 }
 
 type ResizeHandle = 'nw' | 'ne' | 'sw' | 'se';
@@ -31,7 +32,7 @@ const DEFAULT_TRANSFORM = {
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
-export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdateLayer }: GradientPreviewProps) {
+export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdateLayer, meshMode = false }: GradientPreviewProps) {
   const previewRef = useRef<HTMLDivElement>(null);
   const [interaction, setInteraction] = useState<InteractionState | null>(null);
 
@@ -128,6 +129,20 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
       mode: 'resize',
       layerId: layer.id,
       handle,
+      startX: event.clientX,
+      startY: event.clientY,
+      startLayer: layer,
+    });
+  };
+
+  const startMeshPointDrag = (event: React.PointerEvent<HTMLElement>, layer: Layer) => {
+    if (!onUpdateLayer) return;
+    event.preventDefault();
+    event.stopPropagation();
+    onSelectLayer?.(layer.id);
+    setInteraction({
+      mode: 'move',
+      layerId: layer.id,
       startX: event.clientX,
       startY: event.clientY,
       startLayer: layer,
@@ -239,6 +254,29 @@ export function GradientPreview({ layers, activeLayerId, onSelectLayer, onUpdate
             >
               <div style={contentStyle} />
             </div>
+          );
+        })}
+        {meshMode && layers.filter((layer) => layer.preset === 'mesh' && layer.visible).map((layer) => {
+          const x = (layer.x ?? DEFAULT_TRANSFORM.x) + ((layer.width ?? DEFAULT_TRANSFORM.width) / 2);
+          const y = (layer.y ?? DEFAULT_TRANSFORM.y) + ((layer.height ?? DEFAULT_TRANSFORM.height) / 2);
+          const isActive = activeLayerId === layer.id;
+          return (
+            <button
+              key={`mesh-point-${layer.id}`}
+              type="button"
+              className="absolute rounded-full border-2 border-white shadow-lg bg-blue-500/90 hover:scale-110 transition-transform"
+              style={{
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: 'translate(-50%, -50%)',
+                width: isActive ? '16px' : '12px',
+                height: isActive ? '16px' : '12px',
+                zIndex: layers.length + 60,
+                boxShadow: isActive ? '0 0 0 3px rgba(59,130,246,0.35)' : '0 2px 6px rgba(0,0,0,0.25)',
+              }}
+              onPointerDown={(event) => startMeshPointDrag(event, layer)}
+              title={layer.name}
+            />
           );
         })}
         {selectedLayerOverlay && (
