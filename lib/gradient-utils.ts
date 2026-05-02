@@ -7,7 +7,10 @@ export type GradientType =
   | 'radial-repeating' 
   | 'conic' 
   | 'conic-repeating'
-  | 'mesh';
+  | 'mesh'
+  | 'aurora'
+  | 'sunburst'
+  | 'waves';
 
 export interface ColorStop {
   id: string;
@@ -94,6 +97,19 @@ export const generateGradientCSSString = (state: GradientState): string => {
         .join(', ');
       return meshLayers;
     }
+    case 'aurora': {
+      const sortedStops = [...state.stops].sort((a, b) => a.position - b.position);
+      const layers = sortedStops.map((stop, index) => {
+        const y = 15 + ((index * 17) % 70);
+        return `radial-gradient(120% 80% at ${stop.position}% ${y}%, ${buildRgba(stop.color, stop.opacity)} 0%, transparent 70%)`;
+      });
+      layers.push(`linear-gradient(${interpolationMode} ${state.angle}deg, ${colorStopString})`);
+      return layers.join(', ');
+    }
+    case 'sunburst':
+      return `repeating-conic-gradient(${interpolationMode} from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
+    case 'waves':
+      return `repeating-radial-gradient(${interpolationMode} circle at ${state.radialX}% ${state.radialY}%, ${colorStopString})`;
     default:
       return colorStopString;
   }

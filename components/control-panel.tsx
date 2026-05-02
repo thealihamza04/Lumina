@@ -120,7 +120,7 @@ export function ControlPanel({
 
         <div>
           <label className="text-xs font-medium text-slate-500 mb-1.5 block">Layer Type</label>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => onUpdateLayer({ ...layer, type: 'gradient' })}
               className={`flex items-center justify-center gap-2 px-3 py-2 rounded text-sm font-medium transition ${layer.type === 'gradient'
@@ -269,6 +269,9 @@ export function ControlPanel({
                   { value: 'radial', label: 'Radial' },
                   { value: 'conic', label: 'Conic' },
                   { value: 'mesh', label: 'Mesh' },
+                  { value: 'aurora', label: 'Aurora' },
+                  { value: 'sunburst', label: 'Sunburst' },
+                  { value: 'waves', label: 'Waves' },
                 ].map(({ value, label }) => (
                   <button
                     key={value}
