@@ -62,19 +62,21 @@ export const generateGradientCSSString = (state: GradientState): string => {
     })
     .join(', ');
 
+  const interpolationMode = 'in oklab';
+
   switch (state.type) {
     case 'linear':
-      return `linear-gradient(${state.angle}deg, ${colorStopString})`;
+      return `linear-gradient(${interpolationMode} ${state.angle}deg, ${colorStopString})`;
     case 'linear-repeating':
-      return `repeating-linear-gradient(${state.angle}deg, ${colorStopString})`;
+      return `repeating-linear-gradient(${interpolationMode} ${state.angle}deg, ${colorStopString})`;
     case 'radial':
-      return `radial-gradient(${state.radialShape} ${state.radialSize} at ${state.radialX}% ${state.radialY}%, ${colorStopString})`;
+      return `radial-gradient(${interpolationMode} ${state.radialShape} ${state.radialSize} at ${state.radialX}% ${state.radialY}%, ${colorStopString})`;
     case 'radial-repeating':
-      return `repeating-radial-gradient(${state.radialShape} ${state.radialSize} at ${state.radialX}% ${state.radialY}%, ${colorStopString})`;
+      return `repeating-radial-gradient(${interpolationMode} ${state.radialShape} ${state.radialSize} at ${state.radialX}% ${state.radialY}%, ${colorStopString})`;
     case 'conic':
-      return `conic-gradient(from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
+      return `conic-gradient(${interpolationMode} from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
     case 'conic-repeating':
-      return `repeating-conic-gradient(from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
+      return `repeating-conic-gradient(${interpolationMode} from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
     default:
       return colorStopString;
   }
