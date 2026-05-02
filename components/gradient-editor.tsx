@@ -1,7 +1,7 @@
 'use client';
 
 import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Layer, getDefaultLayer } from '@/lib/gradient-utils';
+import { Layer, getDefaultLayer, getGradientTemplateState, GradientTemplate } from '@/lib/gradient-utils';
 import { ControlPanel } from './control-panel';
 import { GradientPreview } from './gradient-preview';
 import { CSSExport } from './css-export';
@@ -69,7 +69,7 @@ export function GradientEditor() {
     setActiveLayerId('1');
   };
 
-  const addLayer = (preset: 'default' | 'blur' | 'noise' = 'default') => {
+  const addLayer = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default') => {
     const newLayer = getDefaultLayer();
     if (preset === 'blur') {
       newLayer.name = `Blur ${newLayer.name}`;
@@ -89,6 +89,40 @@ export function GradientEditor() {
       newLayer.opacity = 1;
       newLayer.blendMode = 'normal';
       newLayer.preset = 'noise';
+    }
+    if (preset === 'vivid-arc') {
+      newLayer.name = `Vivid Arc ${newLayer.name}`;
+      newLayer.gradient = getGradientTemplateState('vivid-arc');
+      newLayer.blurEnabled = true;
+      newLayer.blurAmount = 18;
+      newLayer.noiseEnabled = false;
+    }
+    if (preset === 'neon-flow') {
+      newLayer.name = `Neon Flow ${newLayer.name}`;
+      newLayer.gradient = getGradientTemplateState('neon-flow');
+      newLayer.blurEnabled = true;
+      newLayer.blurAmount = 10;
+      newLayer.noiseEnabled = true;
+      newLayer.noiseAmount = 30;
+      newLayer.blendMode = 'screen';
+    }
+    if (preset === 'soft-grain') {
+      newLayer.name = `Soft Grain ${newLayer.name}`;
+      newLayer.gradient = getGradientTemplateState('soft-grain');
+      newLayer.noiseEnabled = true;
+      newLayer.noiseAmount = 48;
+      newLayer.blurEnabled = true;
+      newLayer.blurAmount = 28;
+      newLayer.blendMode = 'normal';
+    }
+    if (preset === 'sunset-grain') {
+      newLayer.name = `Sunset Grain ${newLayer.name}`;
+      newLayer.gradient = getGradientTemplateState('sunset-grain');
+      newLayer.noiseEnabled = true;
+      newLayer.noiseAmount = 42;
+      newLayer.blurEnabled = true;
+      newLayer.blurAmount = 16;
+      newLayer.blendMode = 'overlay';
     }
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
@@ -298,6 +332,18 @@ export function GradientEditor() {
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => addLayer('noise')}>
                       Noise Layer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('vivid-arc')}>
+                      Vivid Arc Gradient
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('neon-flow')}>
+                      Neon Flow Gradient
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('soft-grain')}>
+                      Soft Grain Gradient
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => addLayer('sunset-grain')}>
+                      Sunset Grain Gradient
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

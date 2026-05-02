@@ -98,6 +98,75 @@ export const getDefaultGradientState = (): GradientState => ({
   conicY: 50,
 });
 
+export type GradientTemplate =
+  | 'vivid-arc'
+  | 'neon-flow'
+  | 'soft-grain'
+  | 'sunset-grain';
+
+export const getGradientTemplateState = (template: GradientTemplate): GradientState => {
+  switch (template) {
+    case 'vivid-arc':
+      return {
+        ...getDefaultGradientState(),
+        type: 'conic',
+        conicAngle: 210,
+        conicX: 52,
+        conicY: 68,
+        stops: [
+          { id: '1', color: '#ff3ca6', position: 0, opacity: 1 },
+          { id: '2', color: '#48d5ff', position: 27, opacity: 1 },
+          { id: '3', color: '#ffd166', position: 52, opacity: 0.9 },
+          { id: '4', color: '#b65cff', position: 77, opacity: 0.95 },
+          { id: '5', color: '#ff8fab', position: 100, opacity: 1 },
+        ],
+      };
+    case 'neon-flow':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear',
+        angle: 102,
+        stops: [
+          { id: '1', color: '#071a14', position: 0, opacity: 1 },
+          { id: '2', color: '#ff007f', position: 28, opacity: 0.95 },
+          { id: '3', color: '#00d06b', position: 52, opacity: 0.95 },
+          { id: '4', color: '#5ee7ff', position: 72, opacity: 0.9 },
+          { id: '5', color: '#8f00ff', position: 100, opacity: 1 },
+        ],
+      };
+    case 'soft-grain':
+      return {
+        ...getDefaultGradientState(),
+        type: 'radial',
+        radialShape: 'circle',
+        radialSize: 'farthest-corner',
+        radialX: 58,
+        radialY: 32,
+        stops: [
+          { id: '1', color: '#f6c1c0', position: 0, opacity: 1 },
+          { id: '2', color: '#8db6db', position: 38, opacity: 0.9 },
+          { id: '3', color: '#4b5c51', position: 68, opacity: 0.75 },
+          { id: '4', color: '#f2ede7', position: 100, opacity: 1 },
+        ],
+      };
+    case 'sunset-grain':
+      return {
+        ...getDefaultGradientState(),
+        type: 'radial',
+        radialShape: 'circle',
+        radialSize: 'farthest-corner',
+        radialX: 54,
+        radialY: 55,
+        stops: [
+          { id: '1', color: '#ff8d38', position: 0, opacity: 0.95 },
+          { id: '2', color: '#10a5c5', position: 45, opacity: 0.92 },
+          { id: '3', color: '#f2b536', position: 73, opacity: 0.9 },
+          { id: '4', color: '#6f84d8', position: 100, opacity: 0.88 },
+        ],
+      };
+  }
+};
+
 export const getDefaultLayer = (id: string = Date.now().toString()): Layer => ({
   id,
   name: `Layer ${id.slice(-3)}`,
