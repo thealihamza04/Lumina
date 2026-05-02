@@ -6,7 +6,8 @@ export type GradientType =
   | 'radial' 
   | 'radial-repeating' 
   | 'conic' 
-  | 'conic-repeating';
+  | 'conic-repeating'
+  | 'mesh';
 
 export interface ColorStop {
   id: string;
@@ -51,13 +52,17 @@ export interface Layer {
   preset?: 'default' | 'blur' | 'noise';
 }
 
+
+const buildRgba = (hex: string, opacity: number) => {
+  const rgb = colord(hex).toRgb();
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${opacity})`;
+};
+
 export const generateGradientCSSString = (state: GradientState): string => {
   const colorStopString = state.stops
     .sort((a, b) => a.position - b.position)
     .map(stop => {
-      const color = colord(stop.color);
-      const rgb = color.toRgb();
-      const rgba = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${stop.opacity})`;
+      const rgba = buildRgba(stop.color, stop.opacity);
       return `${rgba} ${stop.position}%`;
     })
     .join(', ');
@@ -77,6 +82,18 @@ export const generateGradientCSSString = (state: GradientState): string => {
       return `conic-gradient(${interpolationMode} from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
     case 'conic-repeating':
       return `repeating-conic-gradient(${interpolationMode} from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
+    case 'mesh': {
+      const meshLayers = state.stops
+        .sort((a, b) => a.position - b.position)
+        .map((stop, index, allStops) => {
+          const x = stop.position;
+          const y = 20 + ((index % 4) * 20) + (index % 2 === 0 ? 0 : 10);
+          const spread = Math.max(35, 75 - (allStops.length * 3));
+          return `radial-gradient(circle at ${x}% ${Math.min(y, 90)}%, ${buildRgba(stop.color, stop.opacity)} 0%, ${buildRgba(stop.color, Math.max(0, stop.opacity * 0.2))} ${spread}%, transparent 100%)`;
+        })
+        .join(', ');
+      return meshLayers;
+    }
     default:
       return colorStopString;
   }

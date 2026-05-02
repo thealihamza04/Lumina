@@ -263,8 +263,8 @@ export function ControlPanel({
           <div>
             <h3 className="text-sm font-semibold text-slate-900 mb-2">Gradient Type</h3>
             <div className="space-y-2">
-              <div className="grid grid-cols-3 gap-2">
-                {(['linear', 'radial', 'conic'] as GradientType[]).map((type) => (
+              <div className="grid grid-cols-4 gap-2">
+                {(['linear', 'radial', 'conic', 'mesh'] as GradientType[]).map((type) => (
                   <button
                     key={type}
                     onClick={() => updateGradient({ type })}
