@@ -15,7 +15,7 @@ export function ControlPanel({
   layer,
   onUpdateLayer,
 }: ControlPanelProps) {
-  const isBlurOnlyLayer = layer.preset === 'blur';
+  const isEffectPresetLayer = layer.preset === 'blur' || layer.preset === 'noise';
   const gradient = layer.gradient!;
 
   const updateStop = (updatedStop: ColorStop) => {
@@ -63,7 +63,38 @@ export function ControlPanel({
     });
   };
 
-  if (isBlurOnlyLayer) {
+  if (isEffectPresetLayer) {
+    const setEffectPreset = (preset: 'blur' | 'noise') => {
+      if (preset === 'blur') {
+        onUpdateLayer({
+          ...layer,
+          preset: 'blur',
+          name: layer.name.startsWith('Noise ') ? layer.name.replace('Noise ', 'Blur ') : layer.name,
+          type: 'gradient',
+          gradient: layer.gradient || gradient,
+          color: layer.color,
+          blurEnabled: true,
+          blurAmount: layer.blurAmount || 36,
+          noiseEnabled: false,
+        });
+        return;
+      }
+
+      onUpdateLayer({
+        ...layer,
+        preset: 'noise',
+        name: layer.name.startsWith('Blur ') ? layer.name.replace('Blur ', 'Noise ') : layer.name,
+        type: 'color',
+        gradient: undefined,
+        color: 'transparent',
+        blurEnabled: false,
+        noiseEnabled: true,
+        noiseAmount: layer.noiseAmount || 55,
+        opacity: 1,
+        blendMode: 'normal',
+      });
+    };
+
     return (
       <div className="flex flex-col gap-6 h-full">
         <div>
@@ -75,29 +106,83 @@ export function ControlPanel({
             className="w-full px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
-        <div className="space-y-4 border-t border-slate-100 pt-4">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-slate-500">Blur: {layer.blurAmount}px</label>
+        <div>
+          <label className="text-xs font-medium text-slate-500 mb-1.5 block">Effect Type</label>
+          <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={() => onUpdateLayer({ ...layer, blurEnabled: !layer.blurEnabled })}
-              className={`w-8 h-4 rounded-full transition-colors relative ${layer.blurEnabled ? 'bg-blue-500' : 'bg-slate-300'
+              onClick={() => setEffectPreset('blur')}
+              className={`px-3 py-2 rounded text-sm font-medium transition ${layer.preset === 'blur'
+                ? 'bg-blue-500 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                 }`}
             >
-              <div
-                className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${layer.blurEnabled ? 'right-0.5' : 'left-0.5'
-                  }`}
-              />
+              Blur
+            </button>
+            <button
+              onClick={() => setEffectPreset('noise')}
+              className={`px-3 py-2 rounded text-sm font-medium transition ${layer.preset === 'noise'
+                ? 'bg-blue-500 text-white shadow-sm'
+                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+            >
+              Noise
             </button>
           </div>
-          {layer.blurEnabled && (
-            <Slider
-              min={0}
-              max={100}
-              step={1}
-              value={[layer.blurAmount]}
-              onValueChange={([value]) => onUpdateLayer({ ...layer, blurAmount: value })}
-              className="mt-2"
-            />
+        </div>
+        <div className="space-y-4 border-t border-slate-100 pt-4">
+          {layer.preset === 'blur' && (
+            <>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-slate-500">Blur: {layer.blurAmount}px</label>
+                <button
+                  onClick={() => onUpdateLayer({ ...layer, blurEnabled: !layer.blurEnabled })}
+                  className={`w-8 h-4 rounded-full transition-colors relative ${layer.blurEnabled ? 'bg-blue-500' : 'bg-slate-300'
+                    }`}
+                >
+                  <div
+                    className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${layer.blurEnabled ? 'right-0.5' : 'left-0.5'
+                      }`}
+                  />
+                </button>
+              </div>
+              {layer.blurEnabled && (
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[layer.blurAmount]}
+                  onValueChange={([value]) => onUpdateLayer({ ...layer, blurAmount: value })}
+                  className="mt-2"
+                />
+              )}
+            </>
+          )}
+          {layer.preset === 'noise' && (
+            <>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-slate-500">Noise: {layer.noiseAmount}%</label>
+                <button
+                  onClick={() => onUpdateLayer({ ...layer, noiseEnabled: !layer.noiseEnabled })}
+                  className={`w-8 h-4 rounded-full transition-colors relative ${layer.noiseEnabled ? 'bg-blue-500' : 'bg-slate-300'
+                    }`}
+                >
+                  <div
+                    className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${layer.noiseEnabled ? 'right-0.5' : 'left-0.5'
+                      }`}
+                  />
+                </button>
+              </div>
+              {layer.noiseEnabled && (
+                <Slider
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={[layer.noiseAmount]}
+                  onValueChange={([value]) => onUpdateLayer({ ...layer, noiseAmount: value })}
+                  className="mt-2"
+                />
+              )}
+            </>
           )}
         </div>
       </div>
