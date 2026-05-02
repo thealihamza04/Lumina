@@ -263,17 +263,22 @@ export function ControlPanel({
           <div>
             <h3 className="text-sm font-semibold text-slate-900 mb-2">Gradient Type</h3>
             <div className="space-y-2">
-              <div className="grid grid-cols-4 gap-2">
-                {(['linear', 'radial', 'conic', 'mesh'] as GradientType[]).map((type) => (
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'linear', label: 'Linear' },
+                  { value: 'radial', label: 'Radial' },
+                  { value: 'conic', label: 'Conic' },
+                  { value: 'mesh', label: 'Mesh' },
+                ].map(({ value, label }) => (
                   <button
-                    key={type}
-                    onClick={() => updateGradient({ type })}
-                    className={`px-2 py-1.5 rounded text-[10px] font-bold uppercase transition ${gradient.type === type
+                    key={value}
+                    onClick={() => updateGradient({ type: value as GradientType })}
+                    className={`px-2 py-1.5 rounded text-[11px] font-bold transition ${gradient.type === value
                       ? 'bg-slate-800 text-white shadow-sm'
-                      : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                   >
-                    {type}
+                    {label}
                   </button>
                 ))}
               </div>
