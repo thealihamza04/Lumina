@@ -10,7 +10,11 @@ export type GradientType =
   | 'mesh'
   | 'aurora'
   | 'sunburst'
-  | 'waves';
+  | 'waves'
+  | 'stripes'
+  | 'checker'
+  | 'spotlight'
+  | 'vortex';
 
 export interface ColorStop {
   id: string;
@@ -110,6 +114,19 @@ export const generateGradientCSSString = (state: GradientState): string => {
       return `repeating-conic-gradient(${interpolationMode} from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`;
     case 'waves':
       return `repeating-radial-gradient(${interpolationMode} circle at ${state.radialX}% ${state.radialY}%, ${colorStopString})`;
+    case 'stripes':
+      return `repeating-linear-gradient(${state.angle}deg, ${colorStopString})`;
+    case 'checker':
+      return `repeating-conic-gradient(from 45deg at 50% 50%, ${colorStopString})`;
+    case 'spotlight':
+      return `radial-gradient(circle at ${state.radialX}% ${state.radialY}%, ${colorStopString})`;
+    case 'vortex': {
+      const layers = [
+        `conic-gradient(${interpolationMode} from ${state.conicAngle}deg at ${state.conicX}% ${state.conicY}%, ${colorStopString})`,
+        `radial-gradient(circle at ${state.conicX}% ${state.conicY}%, transparent 35%, rgba(0,0,0,0.22) 100%)`,
+      ];
+      return layers.join(', ');
+    }
     default:
       return colorStopString;
   }

@@ -272,6 +272,10 @@ export function ControlPanel({
                   { value: 'aurora', label: 'Aurora' },
                   { value: 'sunburst', label: 'Sunburst' },
                   { value: 'waves', label: 'Waves' },
+                  { value: 'stripes', label: 'Stripes' },
+                  { value: 'checker', label: 'Checker' },
+                  { value: 'spotlight', label: 'Spotlight' },
+                  { value: 'vortex', label: 'Vortex' },
                 ].map(({ value, label }) => (
                   <button
                     key={value}
