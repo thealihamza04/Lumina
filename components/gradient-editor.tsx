@@ -37,6 +37,23 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+const TEMPLATE_PRESET_CONFIG: Record<GradientTemplate, Partial<Layer> & { label: string; titlePrefix: string }> = {
+  'vivid-arc': { label: 'Vivid Arc Gradient', titlePrefix: 'Vivid Arc', gradient: getGradientTemplateState('vivid-arc'), blurEnabled: true, blurAmount: 18, noiseEnabled: false },
+  'neon-flow': { label: 'Neon Flow Gradient', titlePrefix: 'Neon Flow', gradient: getGradientTemplateState('neon-flow'), blurEnabled: true, blurAmount: 10, noiseEnabled: true, noiseAmount: 30, blendMode: 'screen' },
+  'soft-grain': { label: 'Soft Grain Gradient', titlePrefix: 'Soft Grain', gradient: getGradientTemplateState('soft-grain'), blurEnabled: true, blurAmount: 28, noiseEnabled: true, noiseAmount: 48, blendMode: 'normal' },
+  'sunset-grain': { label: 'Sunset Grain Gradient', titlePrefix: 'Sunset Grain', gradient: getGradientTemplateState('sunset-grain'), blurEnabled: true, blurAmount: 16, noiseEnabled: true, noiseAmount: 42, blendMode: 'overlay' },
+  'deep-diagonal': { label: 'Deep Diagonal Gradient', titlePrefix: 'Deep Diagonal', gradient: getGradientTemplateState('deep-diagonal') },
+  'amber-stripes': { label: 'Amber Stripes Gradient', titlePrefix: 'Amber Stripes', gradient: getGradientTemplateState('amber-stripes') },
+  'cool-burst': { label: 'Cool Burst Gradient', titlePrefix: 'Cool Burst', gradient: getGradientTemplateState('cool-burst') },
+  'prism-burst': { label: 'Prism Burst Gradient', titlePrefix: 'Prism Burst', gradient: getGradientTemplateState('prism-burst'), blurEnabled: true, blurAmount: 8 },
+  'electric-bars': { label: 'Electric Bars Gradient', titlePrefix: 'Electric Bars', gradient: getGradientTemplateState('electric-bars'), noiseEnabled: true, noiseAmount: 36 },
+  'spectrum-bars': { label: 'Spectrum Bars Gradient', titlePrefix: 'Spectrum Bars', gradient: getGradientTemplateState('spectrum-bars'), noiseEnabled: true, noiseAmount: 46 },
+  'gold-beam': { label: 'Gold Beam Gradient', titlePrefix: 'Gold Beam', gradient: getGradientTemplateState('gold-beam'), blurEnabled: true, blurAmount: 14 },
+  'rose-wave': { label: 'Rose Wave Gradient', titlePrefix: 'Rose Wave', gradient: getGradientTemplateState('rose-wave'), blurEnabled: true, blurAmount: 20 },
+  'quad-fade': { label: 'Quad Fade Gradient', titlePrefix: 'Quad Fade', gradient: getGradientTemplateState('quad-fade') },
+  'cinema-slats': { label: 'Cinema Slats Gradient', titlePrefix: 'Cinema Slats', gradient: getGradientTemplateState('cinema-slats'), blurEnabled: true, blurAmount: 6, noiseEnabled: true, noiseAmount: 30 },
+};
+
 const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
   const next = [...items];
   const [item] = next.splice(from, 1);
@@ -90,39 +107,10 @@ export function GradientEditor() {
       newLayer.blendMode = 'normal';
       newLayer.preset = 'noise';
     }
-    if (preset === 'vivid-arc') {
-      newLayer.name = `Vivid Arc ${newLayer.name}`;
-      newLayer.gradient = getGradientTemplateState('vivid-arc');
-      newLayer.blurEnabled = true;
-      newLayer.blurAmount = 18;
-      newLayer.noiseEnabled = false;
-    }
-    if (preset === 'neon-flow') {
-      newLayer.name = `Neon Flow ${newLayer.name}`;
-      newLayer.gradient = getGradientTemplateState('neon-flow');
-      newLayer.blurEnabled = true;
-      newLayer.blurAmount = 10;
-      newLayer.noiseEnabled = true;
-      newLayer.noiseAmount = 30;
-      newLayer.blendMode = 'screen';
-    }
-    if (preset === 'soft-grain') {
-      newLayer.name = `Soft Grain ${newLayer.name}`;
-      newLayer.gradient = getGradientTemplateState('soft-grain');
-      newLayer.noiseEnabled = true;
-      newLayer.noiseAmount = 48;
-      newLayer.blurEnabled = true;
-      newLayer.blurAmount = 28;
-      newLayer.blendMode = 'normal';
-    }
-    if (preset === 'sunset-grain') {
-      newLayer.name = `Sunset Grain ${newLayer.name}`;
-      newLayer.gradient = getGradientTemplateState('sunset-grain');
-      newLayer.noiseEnabled = true;
-      newLayer.noiseAmount = 42;
-      newLayer.blurEnabled = true;
-      newLayer.blurAmount = 16;
-      newLayer.blendMode = 'overlay';
+    if (preset in TEMPLATE_PRESET_CONFIG) {
+      const template = TEMPLATE_PRESET_CONFIG[preset as GradientTemplate];
+      Object.assign(newLayer, template);
+      newLayer.name = `${template.titlePrefix} ${newLayer.name}`;
     }
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
@@ -333,18 +321,11 @@ export function GradientEditor() {
                     <DropdownMenuItem onClick={() => addLayer('noise')}>
                       Noise Layer
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addLayer('vivid-arc')}>
-                      Vivid Arc Gradient
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addLayer('neon-flow')}>
-                      Neon Flow Gradient
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addLayer('soft-grain')}>
-                      Soft Grain Gradient
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => addLayer('sunset-grain')}>
-                      Sunset Grain Gradient
-                    </DropdownMenuItem>
+                    {(Object.keys(TEMPLATE_PRESET_CONFIG) as GradientTemplate[]).map((templateKey) => (
+                      <DropdownMenuItem key={templateKey} onClick={() => addLayer(templateKey)}>
+                        {TEMPLATE_PRESET_CONFIG[templateKey].label}
+                      </DropdownMenuItem>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

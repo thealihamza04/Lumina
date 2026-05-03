@@ -102,7 +102,17 @@ export type GradientTemplate =
   | 'vivid-arc'
   | 'neon-flow'
   | 'soft-grain'
-  | 'sunset-grain';
+  | 'sunset-grain'
+  | 'deep-diagonal'
+  | 'amber-stripes'
+  | 'cool-burst'
+  | 'prism-burst'
+  | 'electric-bars'
+  | 'spectrum-bars'
+  | 'gold-beam'
+  | 'rose-wave'
+  | 'quad-fade'
+  | 'cinema-slats';
 
 export const getGradientTemplateState = (template: GradientTemplate): GradientState => {
   switch (template) {
@@ -162,6 +172,143 @@ export const getGradientTemplateState = (template: GradientTemplate): GradientSt
           { id: '2', color: '#10a5c5', position: 45, opacity: 0.92 },
           { id: '3', color: '#f2b536', position: 73, opacity: 0.9 },
           { id: '4', color: '#6f84d8', position: 100, opacity: 0.88 },
+        ],
+      };
+    case 'deep-diagonal':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear-repeating',
+        angle: 45,
+        stops: [
+          { id: '1', color: '#3f3700', position: 0, opacity: 1 },
+          { id: '2', color: '#3b3b5c', position: 25, opacity: 1 },
+          { id: '3', color: '#32439e', position: 50, opacity: 1 },
+          { id: '4', color: '#2942c7', position: 75, opacity: 1 },
+          { id: '5', color: '#223dd6', position: 100, opacity: 1 },
+        ],
+      };
+    case 'amber-stripes':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear-repeating',
+        angle: 90,
+        stops: [
+          { id: '1', color: '#d4c37f', position: 0, opacity: 1 },
+          { id: '2', color: '#d29a17', position: 25, opacity: 1 },
+          { id: '3', color: '#c46b00', position: 50, opacity: 1 },
+          { id: '4', color: '#a70b00', position: 75, opacity: 1 },
+          { id: '5', color: '#8b0000', position: 100, opacity: 1 },
+        ],
+      };
+    case 'cool-burst':
+      return {
+        ...getDefaultGradientState(),
+        type: 'conic',
+        conicAngle: 20,
+        conicX: 50,
+        conicY: 50,
+        stops: [
+          { id: '1', color: '#91a2b2', position: 0, opacity: 1 },
+          { id: '2', color: '#7d9bb8', position: 20, opacity: 1 },
+          { id: '3', color: '#668ab0', position: 40, opacity: 1 },
+          { id: '4', color: '#a6a4a8', position: 60, opacity: 1 },
+          { id: '5', color: '#5e6a99', position: 80, opacity: 1 },
+          { id: '6', color: '#5a79a3', position: 100, opacity: 1 },
+        ],
+      };
+    case 'prism-burst':
+      return {
+        ...getDefaultGradientState(),
+        type: 'conic',
+        conicAngle: 200,
+        conicX: 50,
+        conicY: 50,
+        stops: [
+          { id: '1', color: '#ff46b4', position: 0, opacity: 1 },
+          { id: '2', color: '#8ce0a0', position: 18, opacity: 0.95 },
+          { id: '3', color: '#ffc85f', position: 35, opacity: 0.95 },
+          { id: '4', color: '#d18fe7', position: 50, opacity: 0.95 },
+          { id: '5', color: '#5a5bff', position: 67, opacity: 0.92 },
+          { id: '6', color: '#6c5364', position: 82, opacity: 0.95 },
+          { id: '7', color: '#f7d0b7', position: 100, opacity: 1 },
+        ],
+      };
+    case 'electric-bars':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear-repeating',
+        angle: 90,
+        stops: [
+          { id: '1', color: '#2d2dff', position: 0, opacity: 1 },
+          { id: '2', color: '#f5f6fa', position: 30, opacity: 1 },
+          { id: '3', color: '#2d2dff', position: 60, opacity: 1 },
+          { id: '4', color: '#f5f6fa', position: 100, opacity: 1 },
+        ],
+      };
+    case 'spectrum-bars':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear-repeating',
+        angle: 90,
+        stops: [
+          { id: '1', color: '#ff5f5f', position: 0, opacity: 1 },
+          { id: '2', color: '#78ecff', position: 22, opacity: 1 },
+          { id: '3', color: '#ffe16f', position: 45, opacity: 1 },
+          { id: '4', color: '#b67dff', position: 72, opacity: 1 },
+          { id: '5', color: '#f9f9f9', position: 100, opacity: 1 },
+        ],
+      };
+    case 'gold-beam':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear-repeating',
+        angle: 45,
+        stops: [
+          { id: '1', color: '#000000', position: 0, opacity: 1 },
+          { id: '2', color: '#5b4c00', position: 22, opacity: 1 },
+          { id: '3', color: '#f0cc00', position: 50, opacity: 1 },
+          { id: '4', color: '#7d6500', position: 78, opacity: 1 },
+          { id: '5', color: '#000000', position: 100, opacity: 1 },
+        ],
+      };
+    case 'rose-wave':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear',
+        angle: 80,
+        stops: [
+          { id: '1', color: '#cf2a3f', position: 0, opacity: 1 },
+          { id: '2', color: '#6f42f5', position: 35, opacity: 0.95 },
+          { id: '3', color: '#d8dcff', position: 62, opacity: 0.95 },
+          { id: '4', color: '#d14f7f', position: 100, opacity: 0.95 },
+        ],
+      };
+    case 'quad-fade':
+      return {
+        ...getDefaultGradientState(),
+        type: 'radial',
+        radialShape: 'circle',
+        radialSize: 'farthest-corner',
+        radialX: 52,
+        radialY: 48,
+        stops: [
+          { id: '1', color: '#eea382', position: 0, opacity: 0.95 },
+          { id: '2', color: '#eb0042', position: 32, opacity: 0.95 },
+          { id: '3', color: '#e7d49a', position: 64, opacity: 0.95 },
+          { id: '4', color: '#7fb1a9', position: 100, opacity: 0.95 },
+        ],
+      };
+    case 'cinema-slats':
+      return {
+        ...getDefaultGradientState(),
+        type: 'linear-repeating',
+        angle: 45,
+        stops: [
+          { id: '1', color: '#0e0f14', position: 0, opacity: 1 },
+          { id: '2', color: '#303347', position: 22, opacity: 1 },
+          { id: '3', color: '#f5f5f5', position: 52, opacity: 1 },
+          { id: '4', color: '#7ab3b6', position: 76, opacity: 1 },
+          { id: '5', color: '#ff7b62', position: 100, opacity: 1 },
         ],
       };
   }
