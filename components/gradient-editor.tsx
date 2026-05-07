@@ -64,14 +64,7 @@ const TEMPLATE_PRESET_CONFIG: Record<GradientTemplate, TemplatePresetConfig> = {
   'cinema-slats': { label: 'Cinema Slats', titlePrefix: 'Cinema Slats', description: 'Moody cinematic slats with teal and coral cuts.', category: 'Film', remixes: '689 remixes', gradient: getGradientTemplateState('cinema-slats'), blurEnabled: true, blurAmount: 6, noiseEnabled: true, noiseAmount: 30, preset: 'cinema-slats' },
 };
 
-const POPULAR_GALLERY_PRESETS: GradientTemplate[] = [
-  'soft-grain',
-  'sunset-grain',
-  'vivid-arc',
-  'rose-wave',
-  'neon-flow',
-  'gold-beam',
-];
+const PRESET_GALLERY_ITEMS = Object.keys(TEMPLATE_PRESET_CONFIG) as GradientTemplate[];
 
 const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
   const next = [...items];
@@ -86,6 +79,7 @@ export function GradientEditor() {
   ]);
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [sidebarView, setSidebarView] = useState<'layers' | 'gallery'>('layers');
   const [activeDragLayerId, setActiveDragLayerId] = useState<string | null>(null);
   const [overLayerId, setOverLayerId] = useState<string | null>(null);
   const [pointerY, setPointerY] = useState<number | null>(null);
@@ -103,6 +97,7 @@ export function GradientEditor() {
     const defaultLayer = getDefaultLayer('1');
     setLayers([defaultLayer]);
     setActiveLayerId('1');
+    setSidebarView('layers');
   };
 
   const buildLayerFromPreset = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default', remix = false) => {
@@ -165,6 +160,7 @@ export function GradientEditor() {
     const newLayer = buildLayerFromPreset(preset);
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
+    setSidebarView('layers');
     setIsSettingsOpen(true);
   };
 
@@ -172,6 +168,7 @@ export function GradientEditor() {
     const newLayer = buildLayerFromPreset(preset, true);
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
+    setSidebarView('layers');
     setIsSettingsOpen(true);
   };
 
@@ -343,7 +340,29 @@ export function GradientEditor() {
             </div>
           </div>
 
-          <section className="mb-5 rounded-xl border border-slate-200 bg-white/80 p-3 shadow-sm" aria-labelledby="preset-gallery-heading">
+          <div className="mb-4 grid grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 shadow-sm" aria-label="Editor view switcher">
+            <Button
+              type="button"
+              size="sm"
+              variant={sidebarView === 'layers' ? 'default' : 'ghost'}
+              className="h-8 gap-1.5 text-xs font-black uppercase tracking-tight"
+              onClick={() => setSidebarView('layers')}
+            >
+              <Layers className="h-3.5 w-3.5" /> Layers
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={sidebarView === 'gallery' ? 'default' : 'ghost'}
+              className="h-8 gap-1.5 text-xs font-black uppercase tracking-tight"
+              onClick={() => setSidebarView('gallery')}
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Gallery
+            </Button>
+          </div>
+
+          {sidebarView === 'gallery' ? (
+            <section className="flex min-h-0 flex-1 flex-col rounded-xl border border-slate-200 bg-white/80 p-3 shadow-sm" aria-labelledby="preset-gallery-heading">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
                 <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
@@ -353,12 +372,12 @@ export function GradientEditor() {
                 <p className="text-xs font-medium text-slate-500">Browse community favorites, then remix any preset into an editable layer.</p>
               </div>
               <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black uppercase tracking-tight text-blue-700">
-                {POPULAR_GALLERY_PRESETS.length} picks
+                {PRESET_GALLERY_ITEMS.length} presets
               </span>
             </div>
 
-            <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
-              {POPULAR_GALLERY_PRESETS.map((templateKey) => {
+              <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
+              {PRESET_GALLERY_ITEMS.map((templateKey) => {
                 const preset = TEMPLATE_PRESET_CONFIG[templateKey];
                 const previewBackground = preset.gradient ? generateGradientCSSString(preset.gradient) : undefined;
 
@@ -396,10 +415,9 @@ export function GradientEditor() {
                 );
               })}
             </div>
-          </section>
-
-          {/* Layer List */}
-          <div className="flex-1 flex flex-col min-h-0">
+            </section>
+          ) : (
+            <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-3 px-1">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <Layers className="w-3.5 h-3.5" /> Layers ({layers.length})
@@ -567,7 +585,8 @@ export function GradientEditor() {
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-auto flex justify-end">
