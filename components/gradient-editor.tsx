@@ -1,7 +1,7 @@
 'use client';
 
 import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Layer, getDefaultLayer, getGradientTemplateState, GradientTemplate } from '@/lib/gradient-utils';
+import { Layer, getDefaultLayer, getGradientTemplateState, GradientTemplate, generateGradientCSSString } from '@/lib/gradient-utils';
 import { ControlPanel } from './control-panel';
 import { GradientPreview } from './gradient-preview';
 import { CSSExport } from './css-export';
@@ -16,6 +16,8 @@ import {
   Eye,
   EyeOff,
   Settings2,
+  Sparkles,
+  WandSparkles,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -37,22 +39,39 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const TEMPLATE_PRESET_CONFIG: Record<GradientTemplate, Partial<Layer> & { label: string; titlePrefix: string }> = {
-  'vivid-arc': { label: 'Vivid Arc Gradient', titlePrefix: 'Vivid Arc', gradient: getGradientTemplateState('vivid-arc'), blurEnabled: true, blurAmount: 18, noiseEnabled: false },
-  'neon-flow': { label: 'Neon Flow Gradient', titlePrefix: 'Neon Flow', gradient: getGradientTemplateState('neon-flow'), blurEnabled: true, blurAmount: 10, noiseEnabled: true, noiseAmount: 30, blendMode: 'screen' },
-  'soft-grain': { label: 'Soft Grain Gradient', titlePrefix: 'Soft Grain', gradient: getGradientTemplateState('soft-grain'), blurEnabled: true, blurAmount: 28, noiseEnabled: true, noiseAmount: 48, blendMode: 'normal' },
-  'sunset-grain': { label: 'Sunset Grain Gradient', titlePrefix: 'Sunset Grain', gradient: getGradientTemplateState('sunset-grain'), blurEnabled: true, blurAmount: 16, noiseEnabled: true, noiseAmount: 42, blendMode: 'overlay' },
-  'deep-diagonal': { label: 'Deep Diagonal Gradient', titlePrefix: 'Deep Diagonal', gradient: getGradientTemplateState('deep-diagonal') },
-  'amber-stripes': { label: 'Amber Stripes Gradient', titlePrefix: 'Amber Stripes', gradient: getGradientTemplateState('amber-stripes') },
-  'cool-burst': { label: 'Cool Burst Gradient', titlePrefix: 'Cool Burst', gradient: getGradientTemplateState('cool-burst') },
-  'prism-burst': { label: 'Prism Burst Gradient', titlePrefix: 'Prism Burst', gradient: getGradientTemplateState('prism-burst'), blurEnabled: true, blurAmount: 8 },
-  'electric-bars': { label: 'Electric Bars Gradient', titlePrefix: 'Electric Bars', gradient: getGradientTemplateState('electric-bars'), noiseEnabled: true, noiseAmount: 36 },
-  'spectrum-bars': { label: 'Spectrum Bars Gradient', titlePrefix: 'Spectrum Bars', gradient: getGradientTemplateState('spectrum-bars'), noiseEnabled: true, noiseAmount: 46 },
-  'gold-beam': { label: 'Gold Beam Gradient', titlePrefix: 'Gold Beam', gradient: getGradientTemplateState('gold-beam'), blurEnabled: true, blurAmount: 14 },
-  'rose-wave': { label: 'Rose Wave Gradient', titlePrefix: 'Rose Wave', gradient: getGradientTemplateState('rose-wave'), blurEnabled: true, blurAmount: 20 },
-  'quad-fade': { label: 'Quad Fade Gradient', titlePrefix: 'Quad Fade', gradient: getGradientTemplateState('quad-fade') },
-  'cinema-slats': { label: 'Cinema Slats Gradient', titlePrefix: 'Cinema Slats', gradient: getGradientTemplateState('cinema-slats'), blurEnabled: true, blurAmount: 6, noiseEnabled: true, noiseAmount: 30 },
+type TemplatePresetConfig = Partial<Layer> & {
+  label: string;
+  titlePrefix: string;
+  description: string;
+  category: string;
+  remixes: string;
 };
+
+const TEMPLATE_PRESET_CONFIG: Record<GradientTemplate, TemplatePresetConfig> = {
+  'vivid-arc': { label: 'Vivid Arc', titlePrefix: 'Vivid Arc', description: 'A punchy conic rainbow for hero cards and artboards.', category: 'Hero', remixes: '2.4k remixes', gradient: getGradientTemplateState('vivid-arc'), blurEnabled: true, blurAmount: 18, noiseEnabled: false, preset: 'vivid-arc' },
+  'neon-flow': { label: 'Neon Flow', titlePrefix: 'Neon Flow', description: 'Electric pinks and greens with glow-ready contrast.', category: 'Cyber', remixes: '1.9k remixes', gradient: getGradientTemplateState('neon-flow'), blurEnabled: true, blurAmount: 10, noiseEnabled: true, noiseAmount: 30, blendMode: 'screen', preset: 'neon-flow' },
+  'soft-grain': { label: 'Soft Grain', titlePrefix: 'Soft Grain', description: 'Muted editorial color with a tactile film texture.', category: 'Editorial', remixes: '3.1k remixes', gradient: getGradientTemplateState('soft-grain'), blurEnabled: true, blurAmount: 28, noiseEnabled: true, noiseAmount: 48, blendMode: 'normal', preset: 'soft-grain' },
+  'sunset-grain': { label: 'Sunset Grain', titlePrefix: 'Sunset Grain', description: 'Warm sunset tones balanced with cool ocean blues.', category: 'Warm', remixes: '2.7k remixes', gradient: getGradientTemplateState('sunset-grain'), blurEnabled: true, blurAmount: 16, noiseEnabled: true, noiseAmount: 42, blendMode: 'overlay', preset: 'sunset-grain' },
+  'deep-diagonal': { label: 'Deep Diagonal', titlePrefix: 'Deep Diagonal', description: 'Layered midnight blues with repeating diagonal energy.', category: 'Dark', remixes: '918 remixes', gradient: getGradientTemplateState('deep-diagonal'), preset: 'deep-diagonal' },
+  'amber-stripes': { label: 'Amber Stripes', titlePrefix: 'Amber Stripes', description: 'Golden bands for luxe backgrounds and accents.', category: 'Gold', remixes: '1.1k remixes', gradient: getGradientTemplateState('amber-stripes'), preset: 'amber-stripes' },
+  'cool-burst': { label: 'Cool Burst', titlePrefix: 'Cool Burst', description: 'Cool conic blues for product surfaces.', category: 'Cool', remixes: '846 remixes', gradient: getGradientTemplateState('cool-burst'), preset: 'cool-burst' },
+  'prism-burst': { label: 'Prism Burst', titlePrefix: 'Prism Burst', description: 'A soft prism sweep with candy-color highlights.', category: 'Colorful', remixes: '1.6k remixes', gradient: getGradientTemplateState('prism-burst'), blurEnabled: true, blurAmount: 8, preset: 'prism-burst' },
+  'electric-bars': { label: 'Electric Bars', titlePrefix: 'Electric Bars', description: 'High-voltage blue and white stripes.', category: 'Pattern', remixes: '734 remixes', gradient: getGradientTemplateState('electric-bars'), noiseEnabled: true, noiseAmount: 36, preset: 'electric-bars' },
+  'spectrum-bars': { label: 'Spectrum Bars', titlePrefix: 'Spectrum Bars', description: 'A bright striped spectrum made for maximal layouts.', category: 'Pattern', remixes: '1.3k remixes', gradient: getGradientTemplateState('spectrum-bars'), noiseEnabled: true, noiseAmount: 46, preset: 'spectrum-bars' },
+  'gold-beam': { label: 'Gold Beam', titlePrefix: 'Gold Beam', description: 'Dramatic black-to-gold beams with premium shine.', category: 'Gold', remixes: '1.4k remixes', gradient: getGradientTemplateState('gold-beam'), blurEnabled: true, blurAmount: 14, preset: 'gold-beam' },
+  'rose-wave': { label: 'Rose Wave', titlePrefix: 'Rose Wave', description: 'Rose, violet, and airy blue for soft landing pages.', category: 'Pastel', remixes: '2.2k remixes', gradient: getGradientTemplateState('rose-wave'), blurEnabled: true, blurAmount: 20, preset: 'rose-wave' },
+  'quad-fade': { label: 'Quad Fade', titlePrefix: 'Quad Fade', description: 'A balanced four-color radial fade for UI depth.', category: 'Balanced', remixes: '968 remixes', gradient: getGradientTemplateState('quad-fade'), preset: 'quad-fade' },
+  'cinema-slats': { label: 'Cinema Slats', titlePrefix: 'Cinema Slats', description: 'Moody cinematic slats with teal and coral cuts.', category: 'Film', remixes: '689 remixes', gradient: getGradientTemplateState('cinema-slats'), blurEnabled: true, blurAmount: 6, noiseEnabled: true, noiseAmount: 30, preset: 'cinema-slats' },
+};
+
+const POPULAR_GALLERY_PRESETS: GradientTemplate[] = [
+  'soft-grain',
+  'sunset-grain',
+  'vivid-arc',
+  'rose-wave',
+  'neon-flow',
+  'gold-beam',
+];
 
 const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
   const next = [...items];
@@ -86,7 +105,7 @@ export function GradientEditor() {
     setActiveLayerId('1');
   };
 
-  const addLayer = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default') => {
+  const buildLayerFromPreset = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default', remix = false) => {
     const newLayer = getDefaultLayer();
     if (preset === 'blur') {
       newLayer.name = `Blur ${newLayer.name}`;
@@ -109,9 +128,48 @@ export function GradientEditor() {
     }
     if (preset in TEMPLATE_PRESET_CONFIG) {
       const template = TEMPLATE_PRESET_CONFIG[preset as GradientTemplate];
-      Object.assign(newLayer, template);
-      newLayer.name = `${template.titlePrefix} ${newLayer.name}`;
+      const gradient = template.gradient ? { ...template.gradient, stops: template.gradient.stops.map((stop) => ({ ...stop })) } : undefined;
+      Object.assign(newLayer, {
+        ...(template.blurAmount !== undefined ? { blurAmount: template.blurAmount } : {}),
+        ...(template.blurEnabled !== undefined ? { blurEnabled: template.blurEnabled } : {}),
+        ...(template.blendMode !== undefined ? { blendMode: template.blendMode } : {}),
+        ...(gradient ? { gradient } : {}),
+        ...(template.noiseAmount !== undefined ? { noiseAmount: template.noiseAmount } : {}),
+        ...(template.noiseEnabled !== undefined ? { noiseEnabled: template.noiseEnabled } : {}),
+        ...(template.preset ? { preset: template.preset } : {}),
+      });
+      newLayer.name = `${remix ? 'Remix' : template.titlePrefix} ${newLayer.name}`;
+
+      if (remix && newLayer.gradient) {
+        const directionShift = Math.floor(Math.random() * 71) - 35;
+        newLayer.gradient = {
+          ...newLayer.gradient,
+          angle: (newLayer.gradient.angle + directionShift + 360) % 360,
+          conicAngle: (newLayer.gradient.conicAngle + directionShift + 360) % 360,
+          radialX: Math.min(72, Math.max(28, newLayer.gradient.radialX + Math.floor(Math.random() * 21) - 10)),
+          radialY: Math.min(72, Math.max(28, newLayer.gradient.radialY + Math.floor(Math.random() * 21) - 10)),
+          stops: newLayer.gradient.stops.map((stop, index) => ({
+            ...stop,
+            id: `${index + 1}`,
+            position: Math.min(100, Math.max(0, stop.position + Math.floor(Math.random() * 11) - 5)),
+          })),
+        };
+        newLayer.blurAmount = Math.max(0, newLayer.blurAmount + Math.floor(Math.random() * 9) - 4);
+        newLayer.noiseAmount = Math.min(70, Math.max(10, newLayer.noiseAmount + Math.floor(Math.random() * 15) - 7));
+      }
     }
+    return newLayer;
+  };
+
+  const addLayer = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default') => {
+    const newLayer = buildLayerFromPreset(preset);
+    setLayers((prevLayers) => [newLayer, ...prevLayers]);
+    setActiveLayerId(newLayer.id);
+    setIsSettingsOpen(true);
+  };
+
+  const remixPreset = (preset: GradientTemplate) => {
+    const newLayer = buildLayerFromPreset(preset, true);
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
     setIsSettingsOpen(true);
@@ -284,6 +342,61 @@ export function GradientEditor() {
                 </Button>
             </div>
           </div>
+
+          <section className="mb-5 rounded-xl border border-slate-200 bg-white/80 p-3 shadow-sm" aria-labelledby="preset-gallery-heading">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
+                  <Sparkles className="h-3 w-3" /> Preset gallery
+                </p>
+                <h2 id="preset-gallery-heading" className="text-base font-black text-slate-950">Popular gradients</h2>
+                <p className="text-xs font-medium text-slate-500">Browse community favorites, then remix any preset into an editable layer.</p>
+              </div>
+              <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black uppercase tracking-tight text-blue-700">
+                {POPULAR_GALLERY_PRESETS.length} picks
+              </span>
+            </div>
+
+            <div className="grid max-h-64 grid-cols-1 gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
+              {POPULAR_GALLERY_PRESETS.map((templateKey) => {
+                const preset = TEMPLATE_PRESET_CONFIG[templateKey];
+                const previewBackground = preset.gradient ? generateGradientCSSString(preset.gradient) : undefined;
+
+                return (
+                  <article key={templateKey} className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                    <button
+                      type="button"
+                      className="block h-20 w-full overflow-hidden text-left"
+                      onClick={() => remixPreset(templateKey)}
+                      aria-label={`Remix ${preset.label}`}
+                    >
+                      <div className="h-full w-full transition-transform duration-300 group-hover:scale-105" style={{ background: previewBackground }} />
+                    </button>
+                    <div className="space-y-2 p-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <h3 className="truncate text-xs font-black text-slate-950">{preset.label}</h3>
+                          <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">{preset.category} • {preset.remixes}</p>
+                        </div>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">
+                          {preset.gradient?.type.replace('-', ' ')}
+                        </span>
+                      </div>
+                      <p className="line-clamp-2 text-[11px] leading-snug text-slate-500">{preset.description}</p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 w-full gap-1.5 border-blue-200 bg-blue-50 text-[10px] font-black uppercase tracking-tight text-blue-700 hover:bg-blue-100"
+                        onClick={() => remixPreset(templateKey)}
+                      >
+                        <WandSparkles className="h-3 w-3" /> Remix preset
+                      </Button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
 
           {/* Layer List */}
           <div className="flex-1 flex flex-col min-h-0">

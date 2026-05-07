@@ -48,7 +48,7 @@ export interface Layer {
   width?: number; // 0-100
   height?: number; // 0-100
   rotation?: number; // degrees
-  preset?: 'default' | 'blur' | 'noise';
+  preset?: 'default' | 'blur' | 'noise' | GradientTemplate;
 }
 
 export const generateGradientCSSString = (state: GradientState): string => {
