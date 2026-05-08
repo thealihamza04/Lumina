@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Layer, getDefaultLayer, getGradientTemplateState, GradientTemplate } from '@/lib/gradient-utils';
+import { Layer, getDefaultLayer, GradientTemplate } from '@/lib/gradient-utils';
+import { TEMPLATE_PRESET_CONFIG, isGradientTemplatePreset } from '@/lib/gradient-presets';
 import { ControlPanel } from './control-panel';
 import { GradientPreview } from './gradient-preview';
 import { CSSExport } from './css-export';
@@ -16,6 +18,7 @@ import {
   Eye,
   EyeOff,
   Settings2,
+  Sparkles,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -37,23 +40,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const TEMPLATE_PRESET_CONFIG: Record<GradientTemplate, Partial<Layer> & { label: string; titlePrefix: string }> = {
-  'vivid-arc': { label: 'Vivid Arc Gradient', titlePrefix: 'Vivid Arc', gradient: getGradientTemplateState('vivid-arc'), blurEnabled: true, blurAmount: 18, noiseEnabled: false },
-  'neon-flow': { label: 'Neon Flow Gradient', titlePrefix: 'Neon Flow', gradient: getGradientTemplateState('neon-flow'), blurEnabled: true, blurAmount: 10, noiseEnabled: true, noiseAmount: 30, blendMode: 'screen' },
-  'soft-grain': { label: 'Soft Grain Gradient', titlePrefix: 'Soft Grain', gradient: getGradientTemplateState('soft-grain'), blurEnabled: true, blurAmount: 28, noiseEnabled: true, noiseAmount: 48, blendMode: 'normal' },
-  'sunset-grain': { label: 'Sunset Grain Gradient', titlePrefix: 'Sunset Grain', gradient: getGradientTemplateState('sunset-grain'), blurEnabled: true, blurAmount: 16, noiseEnabled: true, noiseAmount: 42, blendMode: 'overlay' },
-  'deep-diagonal': { label: 'Deep Diagonal Gradient', titlePrefix: 'Deep Diagonal', gradient: getGradientTemplateState('deep-diagonal') },
-  'amber-stripes': { label: 'Amber Stripes Gradient', titlePrefix: 'Amber Stripes', gradient: getGradientTemplateState('amber-stripes') },
-  'cool-burst': { label: 'Cool Burst Gradient', titlePrefix: 'Cool Burst', gradient: getGradientTemplateState('cool-burst') },
-  'prism-burst': { label: 'Prism Burst Gradient', titlePrefix: 'Prism Burst', gradient: getGradientTemplateState('prism-burst'), blurEnabled: true, blurAmount: 8 },
-  'electric-bars': { label: 'Electric Bars Gradient', titlePrefix: 'Electric Bars', gradient: getGradientTemplateState('electric-bars'), noiseEnabled: true, noiseAmount: 36 },
-  'spectrum-bars': { label: 'Spectrum Bars Gradient', titlePrefix: 'Spectrum Bars', gradient: getGradientTemplateState('spectrum-bars'), noiseEnabled: true, noiseAmount: 46 },
-  'gold-beam': { label: 'Gold Beam Gradient', titlePrefix: 'Gold Beam', gradient: getGradientTemplateState('gold-beam'), blurEnabled: true, blurAmount: 14 },
-  'rose-wave': { label: 'Rose Wave Gradient', titlePrefix: 'Rose Wave', gradient: getGradientTemplateState('rose-wave'), blurEnabled: true, blurAmount: 20 },
-  'quad-fade': { label: 'Quad Fade Gradient', titlePrefix: 'Quad Fade', gradient: getGradientTemplateState('quad-fade') },
-  'cinema-slats': { label: 'Cinema Slats Gradient', titlePrefix: 'Cinema Slats', gradient: getGradientTemplateState('cinema-slats'), blurEnabled: true, blurAmount: 6, noiseEnabled: true, noiseAmount: 30 },
-};
-
 const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
   const next = [...items];
   const [item] = next.splice(from, 1);
@@ -67,6 +53,7 @@ export function GradientEditor() {
   ]);
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const didApplySharedPreset = useRef(false);
   const [activeDragLayerId, setActiveDragLayerId] = useState<string | null>(null);
   const [overLayerId, setOverLayerId] = useState<string | null>(null);
   const [pointerY, setPointerY] = useState<number | null>(null);
@@ -86,7 +73,7 @@ export function GradientEditor() {
     setActiveLayerId('1');
   };
 
-  const addLayer = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default') => {
+  const buildLayerFromPreset = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default', remix = false) => {
     const newLayer = getDefaultLayer();
     if (preset === 'blur') {
       newLayer.name = `Blur ${newLayer.name}`;
@@ -107,15 +94,67 @@ export function GradientEditor() {
       newLayer.blendMode = 'normal';
       newLayer.preset = 'noise';
     }
-    if (preset in TEMPLATE_PRESET_CONFIG) {
-      const template = TEMPLATE_PRESET_CONFIG[preset as GradientTemplate];
-      Object.assign(newLayer, template);
-      newLayer.name = `${template.titlePrefix} ${newLayer.name}`;
+    if (isGradientTemplatePreset(preset)) {
+      const template = TEMPLATE_PRESET_CONFIG[preset];
+      const gradient = template.gradient ? { ...template.gradient, stops: template.gradient.stops.map((stop) => ({ ...stop })) } : undefined;
+      Object.assign(newLayer, {
+        ...(template.blurAmount !== undefined ? { blurAmount: template.blurAmount } : {}),
+        ...(template.blurEnabled !== undefined ? { blurEnabled: template.blurEnabled } : {}),
+        ...(template.blendMode !== undefined ? { blendMode: template.blendMode } : {}),
+        ...(gradient ? { gradient } : {}),
+        ...(template.noiseAmount !== undefined ? { noiseAmount: template.noiseAmount } : {}),
+        ...(template.noiseEnabled !== undefined ? { noiseEnabled: template.noiseEnabled } : {}),
+        ...(template.preset ? { preset: template.preset } : {}),
+      });
+      newLayer.name = `${remix ? 'Remix' : template.titlePrefix} ${newLayer.name}`;
+
+      if (remix && newLayer.gradient) {
+        const directionShift = Math.floor(Math.random() * 71) - 35;
+        newLayer.gradient = {
+          ...newLayer.gradient,
+          angle: (newLayer.gradient.angle + directionShift + 360) % 360,
+          conicAngle: (newLayer.gradient.conicAngle + directionShift + 360) % 360,
+          radialX: Math.min(72, Math.max(28, newLayer.gradient.radialX + Math.floor(Math.random() * 21) - 10)),
+          radialY: Math.min(72, Math.max(28, newLayer.gradient.radialY + Math.floor(Math.random() * 21) - 10)),
+          stops: newLayer.gradient.stops.map((stop, index) => ({
+            ...stop,
+            id: `${index + 1}`,
+            position: Math.min(100, Math.max(0, stop.position + Math.floor(Math.random() * 11) - 5)),
+          })),
+        };
+        newLayer.blurAmount = Math.max(0, newLayer.blurAmount + Math.floor(Math.random() * 9) - 4);
+        newLayer.noiseAmount = Math.min(70, Math.max(10, newLayer.noiseAmount + Math.floor(Math.random() * 15) - 7));
+      }
     }
+    return newLayer;
+  };
+
+  const addLayer = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default') => {
+    const newLayer = buildLayerFromPreset(preset);
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
     setIsSettingsOpen(true);
   };
+
+  useEffect(() => {
+    if (didApplySharedPreset.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const preset = params.get('preset');
+    if (!preset || !isGradientTemplatePreset(preset)) return;
+
+    didApplySharedPreset.current = true;
+    const shouldRemix = params.get('remix') === '1';
+    const newLayer = buildLayerFromPreset(preset, shouldRemix);
+    setLayers((prevLayers) => [newLayer, ...prevLayers]);
+    setActiveLayerId(newLayer.id);
+    setIsSettingsOpen(true);
+
+    params.delete('preset');
+    params.delete('remix');
+    const nextSearch = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`);
+  }, []);
 
   const deleteLayer = (id: string) => {
     if (layers.length > 1) {
@@ -285,8 +324,23 @@ export function GradientEditor() {
             </div>
           </div>
 
-          {/* Layer List */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/80 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-blue-700">
+                  <Sparkles className="h-3 w-3" /> Preset library
+                </p>
+                <p className="mt-1 text-xs font-medium leading-snug text-blue-900/70">
+                  Browse presets on a dedicated page, preview them, then remix when ready.
+                </p>
+              </div>
+              <Button asChild size="sm" className="h-8 flex-shrink-0 text-[10px] font-black uppercase tracking-tight">
+                <Link href="/presets">Open</Link>
+              </Button>
+            </div>
+          </div>
+
+            <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-3 px-1">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <Layers className="w-3.5 h-3.5" /> Layers ({layers.length})
@@ -454,7 +508,7 @@ export function GradientEditor() {
                 </div>
               </div>
             )}
-          </div>
+            </div>
         </div>
 
         <div className="mt-auto flex justify-end">
