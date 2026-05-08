@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { PointerEvent as ReactPointerEvent, useEffect, useRef, useState } from 'react';
-import { Layer, getDefaultLayer, getGradientTemplateState, GradientTemplate, generateGradientCSSString } from '@/lib/gradient-utils';
+import { Layer, getDefaultLayer, GradientTemplate } from '@/lib/gradient-utils';
+import { TEMPLATE_PRESET_CONFIG, isGradientTemplatePreset } from '@/lib/gradient-presets';
 import { ControlPanel } from './control-panel';
 import { GradientPreview } from './gradient-preview';
 import { CSSExport } from './css-export';
@@ -17,7 +19,6 @@ import {
   EyeOff,
   Settings2,
   Sparkles,
-  WandSparkles,
 } from 'lucide-react';
 import {
   Tooltip,
@@ -39,33 +40,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-type TemplatePresetConfig = Partial<Layer> & {
-  label: string;
-  titlePrefix: string;
-  description: string;
-  category: string;
-  remixes: string;
-};
-
-const TEMPLATE_PRESET_CONFIG: Record<GradientTemplate, TemplatePresetConfig> = {
-  'vivid-arc': { label: 'Vivid Arc', titlePrefix: 'Vivid Arc', description: 'A punchy conic rainbow for hero cards and artboards.', category: 'Hero', remixes: '2.4k remixes', gradient: getGradientTemplateState('vivid-arc'), blurEnabled: true, blurAmount: 18, noiseEnabled: false, preset: 'vivid-arc' },
-  'neon-flow': { label: 'Neon Flow', titlePrefix: 'Neon Flow', description: 'Electric pinks and greens with glow-ready contrast.', category: 'Cyber', remixes: '1.9k remixes', gradient: getGradientTemplateState('neon-flow'), blurEnabled: true, blurAmount: 10, noiseEnabled: true, noiseAmount: 30, blendMode: 'screen', preset: 'neon-flow' },
-  'soft-grain': { label: 'Soft Grain', titlePrefix: 'Soft Grain', description: 'Muted editorial color with a tactile film texture.', category: 'Editorial', remixes: '3.1k remixes', gradient: getGradientTemplateState('soft-grain'), blurEnabled: true, blurAmount: 28, noiseEnabled: true, noiseAmount: 48, blendMode: 'normal', preset: 'soft-grain' },
-  'sunset-grain': { label: 'Sunset Grain', titlePrefix: 'Sunset Grain', description: 'Warm sunset tones balanced with cool ocean blues.', category: 'Warm', remixes: '2.7k remixes', gradient: getGradientTemplateState('sunset-grain'), blurEnabled: true, blurAmount: 16, noiseEnabled: true, noiseAmount: 42, blendMode: 'overlay', preset: 'sunset-grain' },
-  'deep-diagonal': { label: 'Deep Diagonal', titlePrefix: 'Deep Diagonal', description: 'Layered midnight blues with repeating diagonal energy.', category: 'Dark', remixes: '918 remixes', gradient: getGradientTemplateState('deep-diagonal'), preset: 'deep-diagonal' },
-  'amber-stripes': { label: 'Amber Stripes', titlePrefix: 'Amber Stripes', description: 'Golden bands for luxe backgrounds and accents.', category: 'Gold', remixes: '1.1k remixes', gradient: getGradientTemplateState('amber-stripes'), preset: 'amber-stripes' },
-  'cool-burst': { label: 'Cool Burst', titlePrefix: 'Cool Burst', description: 'Cool conic blues for product surfaces.', category: 'Cool', remixes: '846 remixes', gradient: getGradientTemplateState('cool-burst'), preset: 'cool-burst' },
-  'prism-burst': { label: 'Prism Burst', titlePrefix: 'Prism Burst', description: 'A soft prism sweep with candy-color highlights.', category: 'Colorful', remixes: '1.6k remixes', gradient: getGradientTemplateState('prism-burst'), blurEnabled: true, blurAmount: 8, preset: 'prism-burst' },
-  'electric-bars': { label: 'Electric Bars', titlePrefix: 'Electric Bars', description: 'High-voltage blue and white stripes.', category: 'Pattern', remixes: '734 remixes', gradient: getGradientTemplateState('electric-bars'), noiseEnabled: true, noiseAmount: 36, preset: 'electric-bars' },
-  'spectrum-bars': { label: 'Spectrum Bars', titlePrefix: 'Spectrum Bars', description: 'A bright striped spectrum made for maximal layouts.', category: 'Pattern', remixes: '1.3k remixes', gradient: getGradientTemplateState('spectrum-bars'), noiseEnabled: true, noiseAmount: 46, preset: 'spectrum-bars' },
-  'gold-beam': { label: 'Gold Beam', titlePrefix: 'Gold Beam', description: 'Dramatic black-to-gold beams with premium shine.', category: 'Gold', remixes: '1.4k remixes', gradient: getGradientTemplateState('gold-beam'), blurEnabled: true, blurAmount: 14, preset: 'gold-beam' },
-  'rose-wave': { label: 'Rose Wave', titlePrefix: 'Rose Wave', description: 'Rose, violet, and airy blue for soft landing pages.', category: 'Pastel', remixes: '2.2k remixes', gradient: getGradientTemplateState('rose-wave'), blurEnabled: true, blurAmount: 20, preset: 'rose-wave' },
-  'quad-fade': { label: 'Quad Fade', titlePrefix: 'Quad Fade', description: 'A balanced four-color radial fade for UI depth.', category: 'Balanced', remixes: '968 remixes', gradient: getGradientTemplateState('quad-fade'), preset: 'quad-fade' },
-  'cinema-slats': { label: 'Cinema Slats', titlePrefix: 'Cinema Slats', description: 'Moody cinematic slats with teal and coral cuts.', category: 'Film', remixes: '689 remixes', gradient: getGradientTemplateState('cinema-slats'), blurEnabled: true, blurAmount: 6, noiseEnabled: true, noiseAmount: 30, preset: 'cinema-slats' },
-};
-
-const PRESET_GALLERY_ITEMS = Object.keys(TEMPLATE_PRESET_CONFIG) as GradientTemplate[];
-
 const arrayMove = <T,>(items: T[], from: number, to: number): T[] => {
   const next = [...items];
   const [item] = next.splice(from, 1);
@@ -79,8 +53,7 @@ export function GradientEditor() {
   ]);
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [sidebarView, setSidebarView] = useState<'layers' | 'gallery'>('layers');
-  const [selectedGalleryPreset, setSelectedGalleryPreset] = useState<GradientTemplate>(PRESET_GALLERY_ITEMS[0]);
+  const didApplySharedPreset = useRef(false);
   const [activeDragLayerId, setActiveDragLayerId] = useState<string | null>(null);
   const [overLayerId, setOverLayerId] = useState<string | null>(null);
   const [pointerY, setPointerY] = useState<number | null>(null);
@@ -93,14 +66,11 @@ export function GradientEditor() {
   const layerRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const selectedLayer = layers.find(l => l.id === activeLayerId);
-  const selectedGalleryConfig = TEMPLATE_PRESET_CONFIG[selectedGalleryPreset];
-  const selectedGalleryPreview = selectedGalleryConfig.gradient ? generateGradientCSSString(selectedGalleryConfig.gradient) : undefined;
 
   const resetLayers = () => {
     const defaultLayer = getDefaultLayer('1');
     setLayers([defaultLayer]);
     setActiveLayerId('1');
-    setSidebarView('layers');
   };
 
   const buildLayerFromPreset = (preset: 'default' | 'blur' | 'noise' | GradientTemplate = 'default', remix = false) => {
@@ -124,8 +94,8 @@ export function GradientEditor() {
       newLayer.blendMode = 'normal';
       newLayer.preset = 'noise';
     }
-    if (preset in TEMPLATE_PRESET_CONFIG) {
-      const template = TEMPLATE_PRESET_CONFIG[preset as GradientTemplate];
+    if (isGradientTemplatePreset(preset)) {
+      const template = TEMPLATE_PRESET_CONFIG[preset];
       const gradient = template.gradient ? { ...template.gradient, stops: template.gradient.stops.map((stop) => ({ ...stop })) } : undefined;
       Object.assign(newLayer, {
         ...(template.blurAmount !== undefined ? { blurAmount: template.blurAmount } : {}),
@@ -163,17 +133,28 @@ export function GradientEditor() {
     const newLayer = buildLayerFromPreset(preset);
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
-    setSidebarView('layers');
     setIsSettingsOpen(true);
   };
 
-  const remixPreset = (preset: GradientTemplate) => {
-    const newLayer = buildLayerFromPreset(preset, true);
+  useEffect(() => {
+    if (didApplySharedPreset.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const preset = params.get('preset');
+    if (!preset || !isGradientTemplatePreset(preset)) return;
+
+    didApplySharedPreset.current = true;
+    const shouldRemix = params.get('remix') === '1';
+    const newLayer = buildLayerFromPreset(preset, shouldRemix);
     setLayers((prevLayers) => [newLayer, ...prevLayers]);
     setActiveLayerId(newLayer.id);
-    setSidebarView('layers');
     setIsSettingsOpen(true);
-  };
+
+    params.delete('preset');
+    params.delete('remix');
+    const nextSearch = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`);
+  }, []);
 
   const deleteLayer = (id: string) => {
     if (layers.length > 1) {
@@ -343,106 +324,22 @@ export function GradientEditor() {
             </div>
           </div>
 
-          <div className="mb-4 grid grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 shadow-sm" aria-label="Editor view switcher">
-            <Button
-              type="button"
-              size="sm"
-              variant={sidebarView === 'layers' ? 'default' : 'ghost'}
-              className="h-8 gap-1.5 text-xs font-black uppercase tracking-tight"
-              onClick={() => setSidebarView('layers')}
-            >
-              <Layers className="h-3.5 w-3.5" /> Layers
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={sidebarView === 'gallery' ? 'default' : 'ghost'}
-              className="h-8 gap-1.5 text-xs font-black uppercase tracking-tight"
-              onClick={() => setSidebarView('gallery')}
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Gallery
-            </Button>
+          <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/80 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-blue-700">
+                  <Sparkles className="h-3 w-3" /> Preset library
+                </p>
+                <p className="mt-1 text-xs font-medium leading-snug text-blue-900/70">
+                  Browse presets on a dedicated page, preview them, then remix when ready.
+                </p>
+              </div>
+              <Button asChild size="sm" className="h-8 flex-shrink-0 text-[10px] font-black uppercase tracking-tight">
+                <Link href="/presets">Open</Link>
+              </Button>
+            </div>
           </div>
 
-          {sidebarView === 'gallery' ? (
-            <section className="flex min-h-0 flex-1 flex-col rounded-xl border border-slate-200 bg-white/80 p-3 shadow-sm" aria-labelledby="preset-gallery-heading">
-            <div className="mb-3 flex items-start justify-between gap-3">
-              <div>
-                <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">
-                  <Sparkles className="h-3 w-3" /> Preset gallery
-                </p>
-                <h2 id="preset-gallery-heading" className="text-base font-black text-slate-950">Popular gradients</h2>
-                <p className="text-xs font-medium text-slate-500">Preview a preset first, then remix it into an editable layer when you are ready.</p>
-              </div>
-              <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black uppercase tracking-tight text-blue-700">
-                {PRESET_GALLERY_ITEMS.length} presets
-              </span>
-            </div>
-
-            <div className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="h-32 border-b border-slate-200" style={{ background: selectedGalleryPreview }} />
-              <div className="space-y-3 p-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="text-sm font-black text-slate-950">{selectedGalleryConfig.label}</h3>
-                    <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">
-                      {selectedGalleryConfig.category} • {selectedGalleryConfig.remixes} • {selectedGalleryConfig.gradient?.type.replace('-', ' ')}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="h-8 flex-shrink-0 gap-1.5 px-3 text-[10px] font-black uppercase tracking-tight"
-                    onClick={() => remixPreset(selectedGalleryPreset)}
-                  >
-                    <WandSparkles className="h-3 w-3" /> Remix
-                  </Button>
-                </div>
-                <p className="text-xs font-medium leading-snug text-slate-500">{selectedGalleryConfig.description}</p>
-              </div>
-            </div>
-
-            <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
-              {PRESET_GALLERY_ITEMS.map((templateKey) => {
-                const preset = TEMPLATE_PRESET_CONFIG[templateKey];
-                const previewBackground = preset.gradient ? generateGradientCSSString(preset.gradient) : undefined;
-                const isSelectedPreset = templateKey === selectedGalleryPreset;
-
-                return (
-                  <article key={templateKey} className={`group overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md ${isSelectedPreset ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'}`}>
-                    <button
-                      type="button"
-                      className="block h-20 w-full overflow-hidden text-left"
-                      onClick={() => setSelectedGalleryPreset(templateKey)}
-                      aria-label={`Preview ${preset.label}`}
-                      aria-pressed={isSelectedPreset}
-                    >
-                      <div className="h-full w-full transition-transform duration-300 group-hover:scale-105" style={{ background: previewBackground }} />
-                    </button>
-                    <div className="space-y-2 p-2.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3 className="truncate text-xs font-black text-slate-950">{preset.label}</h3>
-                          <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">{preset.category} • {preset.remixes}</p>
-                        </div>
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase text-slate-500">
-                          {preset.gradient?.type.replace('-', ' ')}
-                        </span>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant={isSelectedPreset ? 'default' : 'outline'}
-                        className="h-7 w-full gap-1.5 text-[10px] font-black uppercase tracking-tight"
-                        onClick={() => setSelectedGalleryPreset(templateKey)}
-                      >
-                        <Sparkles className="h-3 w-3" /> {isSelectedPreset ? 'Previewing' : 'Preview'}
-                      </Button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-            </section>
-          ) : (
             <div className="flex-1 flex flex-col min-h-0">
             <div className="flex items-center justify-between mb-3 px-1">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
@@ -612,7 +509,6 @@ export function GradientEditor() {
               </div>
             )}
             </div>
-          )}
         </div>
 
         <div className="mt-auto flex justify-end">
