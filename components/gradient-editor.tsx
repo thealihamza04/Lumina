@@ -80,6 +80,7 @@ export function GradientEditor() {
   const [activeLayerId, setActiveLayerId] = useState<string>('1');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [sidebarView, setSidebarView] = useState<'layers' | 'gallery'>('layers');
+  const [selectedGalleryPreset, setSelectedGalleryPreset] = useState<GradientTemplate>(PRESET_GALLERY_ITEMS[0]);
   const [activeDragLayerId, setActiveDragLayerId] = useState<string | null>(null);
   const [overLayerId, setOverLayerId] = useState<string | null>(null);
   const [pointerY, setPointerY] = useState<number | null>(null);
@@ -92,6 +93,8 @@ export function GradientEditor() {
   const layerRowRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const selectedLayer = layers.find(l => l.id === activeLayerId);
+  const selectedGalleryConfig = TEMPLATE_PRESET_CONFIG[selectedGalleryPreset];
+  const selectedGalleryPreview = selectedGalleryConfig.gradient ? generateGradientCSSString(selectedGalleryConfig.gradient) : undefined;
 
   const resetLayers = () => {
     const defaultLayer = getDefaultLayer('1');
@@ -369,25 +372,49 @@ export function GradientEditor() {
                   <Sparkles className="h-3 w-3" /> Preset gallery
                 </p>
                 <h2 id="preset-gallery-heading" className="text-base font-black text-slate-950">Popular gradients</h2>
-                <p className="text-xs font-medium text-slate-500">Browse community favorites, then remix any preset into an editable layer.</p>
+                <p className="text-xs font-medium text-slate-500">Preview a preset first, then remix it into an editable layer when you are ready.</p>
               </div>
               <span className="rounded-full bg-blue-50 px-2 py-1 text-[10px] font-black uppercase tracking-tight text-blue-700">
                 {PRESET_GALLERY_ITEMS.length} presets
               </span>
             </div>
 
-              <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
+            <div className="mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="h-32 border-b border-slate-200" style={{ background: selectedGalleryPreview }} />
+              <div className="space-y-3 p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-black text-slate-950">{selectedGalleryConfig.label}</h3>
+                    <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">
+                      {selectedGalleryConfig.category} • {selectedGalleryConfig.remixes} • {selectedGalleryConfig.gradient?.type.replace('-', ' ')}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="h-8 flex-shrink-0 gap-1.5 px-3 text-[10px] font-black uppercase tracking-tight"
+                    onClick={() => remixPreset(selectedGalleryPreset)}
+                  >
+                    <WandSparkles className="h-3 w-3" /> Remix
+                  </Button>
+                </div>
+                <p className="text-xs font-medium leading-snug text-slate-500">{selectedGalleryConfig.description}</p>
+              </div>
+            </div>
+
+            <div className="grid min-h-0 flex-1 grid-cols-1 content-start gap-2 overflow-y-auto pr-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300">
               {PRESET_GALLERY_ITEMS.map((templateKey) => {
                 const preset = TEMPLATE_PRESET_CONFIG[templateKey];
                 const previewBackground = preset.gradient ? generateGradientCSSString(preset.gradient) : undefined;
+                const isSelectedPreset = templateKey === selectedGalleryPreset;
 
                 return (
-                  <article key={templateKey} className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                  <article key={templateKey} className={`group overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md ${isSelectedPreset ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-200'}`}>
                     <button
                       type="button"
                       className="block h-20 w-full overflow-hidden text-left"
-                      onClick={() => remixPreset(templateKey)}
-                      aria-label={`Remix ${preset.label}`}
+                      onClick={() => setSelectedGalleryPreset(templateKey)}
+                      aria-label={`Preview ${preset.label}`}
+                      aria-pressed={isSelectedPreset}
                     >
                       <div className="h-full w-full transition-transform duration-300 group-hover:scale-105" style={{ background: previewBackground }} />
                     </button>
@@ -401,14 +428,13 @@ export function GradientEditor() {
                           {preset.gradient?.type.replace('-', ' ')}
                         </span>
                       </div>
-                      <p className="line-clamp-2 text-[11px] leading-snug text-slate-500">{preset.description}</p>
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="h-7 w-full gap-1.5 border-blue-200 bg-blue-50 text-[10px] font-black uppercase tracking-tight text-blue-700 hover:bg-blue-100"
-                        onClick={() => remixPreset(templateKey)}
+                        variant={isSelectedPreset ? 'default' : 'outline'}
+                        className="h-7 w-full gap-1.5 text-[10px] font-black uppercase tracking-tight"
+                        onClick={() => setSelectedGalleryPreset(templateKey)}
                       >
-                        <WandSparkles className="h-3 w-3" /> Remix preset
+                        <Sparkles className="h-3 w-3" /> {isSelectedPreset ? 'Previewing' : 'Preview'}
                       </Button>
                     </div>
                   </article>
